@@ -1,0 +1,3 @@
+Nome: Nelson
+Idade: 32
+Altura: 1.680000
