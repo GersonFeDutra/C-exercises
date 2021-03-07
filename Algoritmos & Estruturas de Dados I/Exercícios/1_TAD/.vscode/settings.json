@@ -1,0 +1,14 @@
+{
+    "[c]": {
+        "editor.wordBasedSuggestions": false,
+        "editor.suggest.insertMode": "replace",
+        "editor.semanticHighlighting.enabled": true,
+        "editor.tabCompletion": "on",
+        //"files.encoding": "iso885915"
+    },
+    "files.defaultLanguage": "c",
+    "files.associations": {
+        "conjunto.h": "c",
+        "ctype.h": "c"
+    },
+}
