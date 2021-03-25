@@ -1,0 +1,11 @@
+{
+	"files.associations": {
+		"queue.h": "c"
+	},
+	"cSpell.ignoreWords": [
+		"add",
+		"barbequeu",
+		"queue",
+		"to"
+	]
+}
