@@ -26,6 +26,55 @@ int busca_binaria(int *vetor, unsigned int n, int x)
 	return -1;
 }
 
+/* Busca Binária.
+Versão alternativa/ aprimorada do modelo acima */
+int busca_binaria2(int *vetor, unsigned int n, int x)
+{
+	int inicio = 0, fim = n - 1;
+
+	while (inicio < fim) {
+		int meio = (inicio + fim) / 2;
+
+		if (x < vetor[meio])
+			fim = meio - 1;
+		else if (x > vetor[meio])
+			inicio = meio + 1;
+		else
+			return meio;
+	}
+	if (x == vetor[fim])
+		return fim;
+
+	return -1;
+}
+
+
+/* Busca Binária.
+Versão alternativa do modelo acima usando o tamanho do array como flag de falha.
+Note que n deve ser maior que 0. */
+// unsigned int busca_binaria3(int *vetor, unsigned int n, int x)
+// {
+// 	// if (n == 0)
+// 	// 	return 0;
+// 
+// 	unsigned int inicio = 0, fim = n - 1;
+// 
+// 	while (inicio < fim) {
+// 		unsigned int meio = (inicio + fim) / 2;
+// 
+// 		if (x < vetor[meio])
+// 			fim = meio - 1;
+// 		else if (x > vetor[meio])
+// 			inicio = meio + 1;
+// 		else
+// 			return meio;
+// 	}
+// 	if (x == vetor[fim])
+// 		return fim;
+// 
+// 	return n;
+// }
+
 
 /* Busca em um vetor ordenado. O(1) - O(n)
 Vantagens: Pode parar antes de andar o vetor todo.
@@ -70,7 +119,7 @@ int main()
 		int (*tipo)(int *vetor, unsigned int tamanho, int x);
 	} typedef Busca;
 
-	static const unsigned int BUSCAS = 3;
+	static const unsigned int BUSCAS = 4;
 	static const unsigned int TAMANHO = 1999999;
 	static const unsigned int RANGE = TAMANHO / 100;
 
@@ -84,6 +133,7 @@ int main()
 		{.mensagem = "Busca sequencial", .tipo = &busca_sequencial},
 		{.mensagem = "Busca sequencial ordenada", .tipo = &busca_sequencial_ordenada},
 		{.mensagem = "Busca binária", .tipo = &busca_binaria},
+		{.mensagem = "Busca binária 2", .tipo = &busca_binaria2},
 	};
 
 	// Cria um vetor aleatório para ser usado nas buscas.
