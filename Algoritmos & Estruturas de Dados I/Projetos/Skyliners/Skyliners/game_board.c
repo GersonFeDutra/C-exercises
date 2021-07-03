@@ -332,8 +332,8 @@ Board new_board()
 	for (n = 0; n < INITIAL_PIECES; ++n) {
 
 		do {
-			i = rand() % 2 + (CENTER - 1);
-			j = rand() % 2 + (CENTER - 1);
+			i = rand() % 3 + (CENTER - 1);
+			j = rand() % 3 + (CENTER - 1);
 		} while (_check_cell(board, i, j, PARK));
 
 		_add_to_cell(board, i, j, APARTMENT);
@@ -560,34 +560,6 @@ int get_points_from(Board board, int player)
 
 	for (i = 0; i < SIZE; ++i)
 		points += _get_points_from_line_view(rotated_board, i);
-
-	/* //Outra forma, *depreciada*, (mais expensiva) de fazer a contagem de pontos. De forma similar à
-	//`print_table_sideview`, criamos pilhas para cada faixa de visão e desempilhamos para processar
-	//os dados.
-	int j, k;
-	Stack *view_lines[SIZE];
-	for (i = 0; i < SIZE; ++i)
-		view_lines[i] = _get_line_view(rotated_board, i);
-
-	for (i = 0; i < SIZE; ++i) {
-		int width, size = stack_size(view_lines[i]), last_width = 0;
-
-		while (size > 0) {
-			assert(stack_get(view_lines[i], &width) == OK);
-			assert(stack_pop(view_lines[i]) == OK);
-			// Asseguramos, por asserção, que a pilha existe e que não é vazia.
-			--size;
-			// Vinculamos os tamanhos das pilhas manualmente para evitar chamar o método de
-			//contagem de pilha, reduzindo custos.
-
-			if (width == last_width)
-				continue;
-
-			++points;
-			last_width = width;
-		}
-	}
-	*/
 
 	if (player != DOWN_TOP)
 		// Lembrando que não fazemos uma cópia quando "rotacionamos" para o jogador ao Sul.
