@@ -1,0 +1,102 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build library",
+			"command": "bash",
+			"args": [
+				"${workspaceFolder}/.vscode/build_libs.sh",
+				"${relativeFileDirname}/libs/${fileBasenameNoExtension}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /bin/gcc"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build library: ask lib name",
+			"command": "bash",
+			"args": [
+				"${workspaceFolder}/.vscode/build_libs.sh",
+				"${relativeFileDirname}/libs/${input:libName}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /bin/gcc"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build library: hardcoded lib name",
+			"command": "bash",
+			"args": [
+				"${workspaceFolder}/.vscode/build_libs.sh",
+				"${relativeFileDirname}/libs/c_world"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /bin/gcc"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build active file",
+			"command": "/bin/gcc",
+			"args": [
+				// Compila um único arquivo .c na mesma pasta.
+				// "-g",
+				// "${file}",
+				// "-o",
+				// "${fileDirname}/${fileBasenameNoExtension}.out"
+
+				// Compila todos os arquivos da pasta e linka em um
+				// executável na pasta '.bin/' (pasta deve existir).
+				"-g",
+				"${relativeFileDirname}/*.c",
+				"-o",
+				"${relativeFileDirname}/.bin/${fileBasenameNoExtension}.out"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /bin/gcc"
+		}
+	],
+	"inputs": [
+		{
+			"id": "libName",
+			"description": "Insert the name of the lib",
+			"type": "promptString"
+		}
+	],
+}
