@@ -1,0 +1,49 @@
+{
+	"configurations": [
+		{
+			// Compila o projeto usando SCons e executa em modo debug
+			"name": "(gdb) Launch",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/.bin/out.so",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${fileDirname}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			],
+			"preLaunchTask": "SCons Build",
+		},
+		{
+			// Compila o projeto usando o SCons e executa em modo de debug com flag de testes
+			// Definida pelo programa
+			"name": "(gdb) Launch: Test Mode",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/.bin/out.so",
+			"args": [
+				"-t"
+			],
+			"stopAtEntry": false,
+			"cwd": "${fileDirname}",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "gdb",
+			"setupCommands": [
+				{
+					"description": "Enable pretty-printing for gdb",
+					"text": "-enable-pretty-printing",
+					"ignoreFailures": true
+				}
+			],
+			"preLaunchTask": "SCons Build",
+		},
+	],
+}

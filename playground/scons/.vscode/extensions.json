@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"ms-python.python",
+		"ms-vscode.cpptools",
+		"xaver.clang-format",
+		"streetsidesoftware.code-spell-checker",
+		"benjamin-simmonds.pythoncpp-debug"
+	]
+}

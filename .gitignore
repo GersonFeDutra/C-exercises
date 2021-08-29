@@ -1,7 +1,17 @@
+# Executável do Windows
 *.exe
+# Executável genérico (Windows)
 *.out
 #*.x86_64
+# LaTeX, papers, e afins
 *.pdf
+# Assets
 *.zip
+# Arquivos de saída da compilação não linkados
+*.o
+# Arquivo de biblioteca genérico (Linux)
 *.so
+# Arquivo de saída da compiliação do Python
 *.pyc
+# Binário usado pelo SCons para rastrear arquivos de compilação
+*.sconsign.dblite
