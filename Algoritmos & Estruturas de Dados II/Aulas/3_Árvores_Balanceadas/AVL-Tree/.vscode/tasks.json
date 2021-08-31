@@ -1,0 +1,62 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			// Task para invocar a compilação do SCons no terminal do VsCode
+			"type": "shell",
+			"label": "SCons Build",
+			"command": "scons",
+			// "args": [
+			// Infelizmente VsCode não suporta SCons; e desconheço uma maneira de enviar os
+			// breakpoints como argumento dessa task
+			// 	"--debug=pdb"
+			// ],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
+			// "options": {
+			// 	"cwd": "${workspaceFolder}/src/"
+			// },
+			"problemMatcher": "$msCompile",
+			"group": {
+				"kind": "build",
+				"isDefault": true,
+			},
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build active file",
+			"command": "/bin/gcc",
+			"args": [
+				// Compila um único arquivo .c na mesma pasta.
+				// "-g",
+				// "${file}",
+				// "-o",
+				// "${fileDirname}/${fileBasenameNoExtension}.out"
+				// Compila todos os arquivos da pasta e linka em um
+				// executável na pasta '.bin/' (pasta deve existir).
+				"-g",
+				"src/*.c",
+				"lib/termcolor-c/include/*.c",
+				"-o",
+				".bin/out.so"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /bin/gcc"
+		}
+	]
+}

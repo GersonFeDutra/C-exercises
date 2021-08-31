@@ -1,0 +1,23 @@
+ROOT: str = 'src'  # Diretório raíz do projeto com todos os códigos-fonte
+BIN: str = '.bin'  # Diretório onde serão armazenados os binários compilados
+
+
+env = Environment()
+
+# Single file
+# env.Program(target=f'{BIN}/out.so', source=[f'{ROOT}/main.c'])
+
+# Different folders
+# env.Program(source=[Glob('*.c'), Glob(f'{ROOT}/*.c')], target='yourBinaryName')
+
+# All in the ROOT folder
+# env.Program(target=f'{BIN}/out.so', source=[Glob(f'{ROOT}/*.c')])
+
+# Build shared library
+# lib = env.SharedLibrary(target=f'{BIN}/out.so', source=[Glob(f'{ROOT}/*.c')])
+# env.InstallAs(target=f'{BIN}/out.ext', source=lib)
+
+# Build all in the ROOT folder, targeting output files to different folder
+env.VariantDir(f'{BIN}', ROOT, duplicate=0)
+files = Glob(f'{BIN}/*.c')
+env.Program(f'{BIN}/out.so', files)
