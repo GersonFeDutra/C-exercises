@@ -253,7 +253,6 @@ static void *_free_node(Tree *avl_tree, int32_t key)
 }
 
 
-// WATCH
 static void _padding(char ch, int n)
 {
 	uint32_t i;
@@ -263,7 +262,6 @@ static void _padding(char ch, int n)
 }
 
 
-// WATCH
 static void _print_subtree(Node node, uint32_t level)
 {
 	int i;

@@ -4,6 +4,7 @@
 // #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define INPUT_MARKER ">>>"
 #define NULL_TREE_MESSAGE "Erro! Árvore inexistente!\n"
@@ -17,6 +18,12 @@
 	{                                                                                              \
 		fputs(STREAM, TEXT_FUNC(stdout));                                                          \
 		reset_colors(stdout);                                                                      \
+	}
+
+#define DO_NOTHING(TREE)                                                                           \
+	if (*TREE == NULL) {                                                                           \
+		PRINT_CLR("Árvore inexistente!\nNada será feito!\n", text_yellow);                         \
+		return;                                                                                    \
 	}
 
 struct student {
@@ -79,13 +86,11 @@ void test_destroy_tree(Tree **tree)
 }
 
 
+/* Métodos manuais. */
+
 void test_add_student(Tree **tree)
 {
-	if (*tree == NULL) {
-		PRINT_CLR("Árvore inexistente!\nNada será feito!\n", text_yellow);
-		return;
-	}
-
+	DO_NOTHING(tree)
 	char INVALID_RANGE_MESSAGE[] = "Erro! Insira um valor entre 0 e 10:";
 	Student new = (Student)malloc(sizeof(struct student));
 
@@ -112,6 +117,7 @@ void test_add_student(Tree **tree)
 				break;
 			case NOT_OK: {
 				PRINT_CLR("Erro de memória ao alocar nó!\n", text_red)
+				free(new);
 				return;
 			};
 				// case NULL_ERROR: return;
@@ -267,9 +273,9 @@ void test_get_tree_nearest_lower(Tree **tree)
 }
 
 
-void test_print_tree(Tree *tree)
+void test_print_tree(Tree **tree)
 {
-	if (print_tree(tree) == NULL_ERROR)
+	if (print_tree(*tree) == NULL_ERROR)
 		PRINT_CLR("Árvore Inexistente!\n", text_red)
 }
 
@@ -286,9 +292,86 @@ void silent_reset(Tree **tree)
 }
 
 
+/* Testes automáticos. */
+
+// Guarda uma lista de referências para fácil deslocamento dos elementos.
+static struct generator {
+	struct auto_source source;
+	uint8_t *availlable_names;
+	uint8_t availlable_n;
+} generator = {.source = {NULL, 0}, .availlable_names = NULL, .availlable_n = 0};
+
+#define CHECK_MODULE_STARTED                                                                       \
+	if (generator.source.possible_names_n == 0) {                                                  \
+		PRINT_CLR("Erro! Módulo de testes automatizados não inicializada.\n", text_red)            \
+		PRINT_CLR("Chamar o método `start_auto_test`\n", text_yellow)                              \
+		return;                                                                                    \
+	}
+
+
+void auto_add_student(Tree **tree, int32_t id)
+{
+	CHECK_MODULE_STARTED
+	DO_NOTHING(tree)
+	Student new = (Student)malloc(sizeof(struct student));
+
+	if (generator.availlable_n == 0) {
+		PRINT_CLR(
+			"Aviso: Fonte de nomes esvaziada! Não é possível continuar a geração", text_yellow);
+		free(new);
+		return;
+	}
+
+	// Escolhe um nome aleatória e marca-o como usado (removendo-o do vetor de disponíveis).
+	uint8_t i = rand() % generator.availlable_n;
+	strcpy(new->name, generator.source.possible_names[generator.availlable_names[i]]);
+	generator.availlable_names[i] = generator.availlable_names[generator.availlable_n - 1];
+	// Note que não necessariamente temos de removê-lo, apenas sobrescrever o seu valor com o último
+	// elemento do vetor. Como o tamanho teórico será removido, economizamos no processamento. :D
+
+	new->av1 = rand() % 10;
+	new->av2 = rand() % 10;
+	new->id = id;
+
+	// printf("Inserindo aluno:");
+	// sprintf(text_blue(stdout), "Nome: %s", new->name);
+	// sprintf(text_blue(stdout), "1° Nota: %d", new->av1);
+	// sprintf(text_blue(stdout), "2° Nota: %d", new->av2);
+	// sprintf(text_blue(stdout), "Matrícula: %d", new->id);
+	// reset_colors(stdout);
+
+	switch (insert_node(*tree, new, new->id)) {
+		case INPUT_ERROR: {
+			// PRINT_CLR("A matrícula indicada já está registarda na árvore!\n", text_yellow)
+			return;
+		} break;
+		case NOT_OK: {
+			// PRINT_CLR("Erro de memória ao alocar nó!\n", text_red)
+			free(new);
+			return;
+		};
+	}
+	// PRINT_CLR("Aluno inserido com sucesso!\n", text_green)
+}
+
+
+void auto_remove_student(Tree **tree, int32_t id)
+{
+	CHECK_MODULE_STARTED
+	printf("Tentando remover aluno de mátricula [%d]:\n", id);
+	switch (free_node(*tree, id)) {
+		case NULL_ERROR: PRINT_CLR(NULL_TREE_MESSAGE, text_red) break;
+		case EMPTY_ERROR: PRINT_CLR(EMPTY_TREE_MESSAGE, text_red) break;
+		case NOT_OK: PRINT_CLR(INVALID_ID_MESSAGE, text_red) break;
+		case OK: PRINT_CLR("Aluno removido com sucesso!\n", text_green) break;
+	}
+}
+
+
 // Quantida de opções disponíveis.
-#define N_OPTIONS 13
+#define N_OPTIONS 14
 static const Option OPTIONS[] = {
+	{.title = "Imprimir árvore", .resolve = &test_print_tree},
 	{.title = "Criar árvore", .resolve = &test_create_tree},
 	{.title = "Esvaziar árvore", .resolve = &test_clear_tree},
 	{.title = "Destruir árvore", .resolve = &test_destroy_tree},
@@ -309,4 +392,33 @@ void get_options(const Option **r_options, uint8_t *r_n)
 	// Option *options = (Option *)malloc(sizeof(Option) * n);
 	*r_options = OPTIONS;
 	*r_n = N_OPTIONS;
+}
+
+
+void start_auto_test(struct auto_source new)
+{
+	if (new.possible_names_n == 0 || new.possible_names == NULL) {
+		PRINT_CLR("Erro! fonte de dados auto-gerados não foi determinada.\n", text_red)
+		return;
+	}
+
+	generator.source = new;
+	generator.availlable_names = (uint8_t *)malloc(sizeof(uint8_t) * new.possible_names_n);
+	generator.availlable_n = new.possible_names_n;
+
+	uint8_t i;
+	for (i = 0; i < new.possible_names_n; ++i)
+		generator.availlable_names[i] = 0;
+}
+
+
+void finish_auto_test()
+{
+	if (generator.availlable_names != NULL) {
+		free(generator.availlable_names);
+		generator.availlable_names = NULL;
+		generator.availlable_n = 0;
+	}
+
+	generator.source.possible_names_n = 0;
 }

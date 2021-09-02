@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define LINE "---------------------"
 #define INPUT_MARKER ">>>"
@@ -48,19 +49,46 @@
 ░█░▄▀█░▄▀░░█░▄▀█░▄▀░   ▀▄▄░█░░█▄▄▄▄▄█░░█░▄▄▀
 ░░░░░░░░░░░░░░░░░░░░   ░░░▀██▄▄███████▄▄██▀ :D
 */
-int main()
+int main(int argc, char *argv[])
 {
 	setlocale(LC_ALL, "Portuguese");
+	uint8_t is_test_mode = false;
+	uint8_t i;
+	char test_flag[] = "-t";
 
-	void test(void);
+	for (i = 0; i < argc; ++i)
+		if (strcmp(argv[i], test_flag) == 0) {
+			is_test_mode = true;
+			break;
+		}
 
-	printf(
-		"Bem vindo ao módulo de testes do Tipo Abstrato de Dados: Árvore AVL!\n"
-		"O objetivo desse módulo é verificar manualmente as possibilidades de operações com essa "
-		"estrutura.\n\n");
+	void test(Tree * nutz);
+	void auto_test(Tree * nutz);
+
+	printf("Bem vindo ao módulo de testes do Tipo Abstrato de Dados: Árvore AVL!\n\n");
+
+	if (is_test_mode) {
+		printf("O objetivo desse módulo é verificar as possibilidades de operações com essa "
+			   "estrutura!\nAtualmente executando em ");
+		fputs("modo automático!\n\n", text_bold(stdout));
+		reset_colors(stdout);
+	}
+	else {
+		printf("O objetivo desse módulo é verificar ");
+		fputs("manualmente", text_bold(stdout));
+		reset_colors(stdout);
+		printf(" as possibilidades de operações com essa estrutura.\n\n");
+	}
+
 	PAUSE
 	CLEAR
-	test();
+	Tree *nutz = NULL;
+
+	if (is_test_mode)
+		auto_test(nutz);
+
+	test(nutz);
+	silent_reset(&nutz);
 	printf("Fim da execução!\n");
 
 	return 0;
@@ -68,14 +96,12 @@ int main()
 
 
 /* O loop-principal (ciclo de vida do programa) ocorre aqui. */
-void test()
+void test(Tree *nutz)
 {
+	int8_t i;
 	uint8_t opts;
 	const Option *options;
 	get_options(&options, &opts);
-
-	Tree *nutz = NULL;
-	int i;
 
 	while (1) {
 		printf(LINE " Menu de testes " LINE "\n");
@@ -88,12 +114,49 @@ void test()
 			"Entrada inválida! Tente novamente:", INPUT_MARKER,
 			"Entrada inválida! Tente novamente:");
 
-		if (choice == 0) {
-			silent_reset(&nutz);
+		if (choice == 0)
 			return;
-		}
+
 		options[choice - 1].resolve(&nutz);
+		test_print_tree(&nutz);
 		PAUSE
 		CLEAR
 	}
+}
+
+
+void auto_test(Tree *nutz)
+{
+	// char *names[125] = ;
+
+	struct auto_source source = {
+		.possible_names =
+			{
+				"Gold D. Roger",
+				"Portgas D. Rouge",
+				"Monkey D. Luffy",
+				"Portgas D. Ace",
+				"Trafalgar D. Water Law",
+				"Monkey D. Garp",
+				"Monkey D. Dragon",
+				"Jaguar D. Saul",
+				"Marshall D. Teach",
+				"Con D. Oriano",
+				"Go D. Usopp",
+			},
+		.possible_names_n = 11,
+	};
+
+	start_auto_test(source);
+	test_create_tree(&nutz);
+
+	uint8_t i = 0;
+	for (i = 0; i < source.possible_names_n; ++i)
+		auto_add_student(&nutz, i);
+
+	finish_auto_test();
+	printf(LINE "Árvore gerada" LINE "\n");
+	test_print_tree(&nutz);
+	PAUSE
+	CLEAR
 }
