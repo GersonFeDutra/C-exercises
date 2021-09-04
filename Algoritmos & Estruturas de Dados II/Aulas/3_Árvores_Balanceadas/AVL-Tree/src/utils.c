@@ -26,6 +26,13 @@
 		return;                                                                                    \
 	}
 
+#define CHECK_TREE_METHOD(METHOD, CASE_OK)                                                         \
+	switch (METHOD) {                                                                              \
+		case NULL_ERROR: PRINT_CLR(NULL_TREE_MESSAGE, text_red) break;                             \
+		case EMPTY_ERROR: PRINT_CLR(EMPTY_TREE_MESSAGE, text_red) break;                           \
+		case OK: CASE_OK break;                                                                    \
+	}
+
 struct student {
 	int32_t id;
 	char name[125];
@@ -220,20 +227,29 @@ void test_node_count(Tree **tree)
 }
 
 
-void test_get_tree_higher_node(Tree **tree)
+void test_get_tree_max_node(Tree **tree)
 {
 	void *ret;
 
-	switch (get_tree_higher_node(*tree, &ret)) {
-		case NULL_ERROR: PRINT_CLR(NULL_TREE_MESSAGE, text_red) break;
-		case EMPTY_ERROR: PRINT_CLR(EMPTY_TREE_MESSAGE, text_red) break;
-		case OK: {
-			Student student = (Student)ret;
-			printf("O aluno com a maior matrícula na árvore é [%d]: {Nome: %s, Nota 1: %.1f, "
-				   "Nota 2: %.1f}.\n",
-				student->id, student->name, student->av1, student->av2);
-		} break;
-	}
+	CHECK_TREE_METHOD(get_tree_max_node(*tree, &ret), {
+		Student student = (Student)ret;
+		printf("O aluno com a maior matrícula na árvore é [%d]: "
+			   "{Nome: %s, Nota 1: %.1f, Nota 2: %.1f}.\n",
+			student->id, student->name, student->av1, student->av2);
+	})
+}
+
+
+void test_get_tree_min_node(Tree **tree)
+{
+	void *ret;
+
+	CHECK_TREE_METHOD(get_tree_min_node(*tree, &ret), {
+		Student student = (Student)ret;
+		printf("O aluno com a menor matrícula na árvore é [%d]: "
+			   "{Nome: %s, Nota 1: %.1f, Nota 2: %.1f}.\n",
+			student->id, student->name, student->av1, student->av2);
+	})
 }
 
 
@@ -277,6 +293,11 @@ void test_print_tree(Tree **tree)
 {
 	if (print_tree(*tree) == NULL_ERROR)
 		PRINT_CLR("Árvore Inexistente!\n", text_red)
+}
+
+
+void do_nothing(Tree **tree)
+{
 }
 
 
@@ -369,9 +390,9 @@ void auto_remove_student(Tree **tree, int32_t id)
 
 
 // Quantida de opções disponíveis.
-#define N_OPTIONS 14
+#define N_OPTIONS 15
 static const Option OPTIONS[] = {
-	{.title = "Imprimir árvore", .resolve = &test_print_tree},
+	{.title = "Imprimir árvore", .resolve = &do_nothing},
 	{.title = "Criar árvore", .resolve = &test_create_tree},
 	{.title = "Esvaziar árvore", .resolve = &test_clear_tree},
 	{.title = "Destruir árvore", .resolve = &test_destroy_tree},
@@ -383,7 +404,8 @@ static const Option OPTIONS[] = {
 	{.title = "Altura do nó", .resolve = &test_node_depth},
 	{.title = "Quantidade de nós", .resolve = &test_node_count},
 	{.title = "Quantidade de folhas", .resolve = &test_leaves_count},
-	{.title = "Maior nó", .resolve = &test_get_tree_higher_node},
+	{.title = "Maior nó", .resolve = &test_get_tree_max_node},
+	{.title = "Menor nó", .resolve = &test_get_tree_min_node},
 	{.title = "Menor nó (restrito)", .resolve = &test_get_tree_nearest_lower},
 };
 

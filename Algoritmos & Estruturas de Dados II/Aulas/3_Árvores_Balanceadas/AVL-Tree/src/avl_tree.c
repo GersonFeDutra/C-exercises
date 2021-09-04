@@ -15,15 +15,22 @@
 		exit(1);                                                                                   \
 	}
 
+#define MAX(A, B) (A > B) ? A : B
+
 struct node {
 	struct node *left;
 	void *element; // Ponteiro genérico para um dado elemento.
 	int32_t key;
 	struct node *right;
+	// Ter um registro da altura das subárvores de uma árvore AVL diminui a complexidade de suas
+	// operações.
+	int32_t height;
 } typedef *Node;
 
 
 /* Funções "privadas" */
+
+/* Funções auxiliares genéricas de uma BST. */
 
 /* Função auxiliar recursiva para eliminar nós da árvore.
  * Irá destruir uma subárvore, em que o nó passado é a raíz - eliminando também os seus dados.
@@ -94,6 +101,7 @@ static void _post_order(Node node)
 }
 
 
+// WATCH
 /* Função auxiliar recursiva que verifica a altura/ profundidade de um nó. */
 static uint32_t _node_depth(Node node)
 {
@@ -150,109 +158,6 @@ static uint32_t _count_leaves(Node node)
 }
 
 
-/* Função auxiliar que elimina um nó 'in-place' - elimina apenas um único nó e corrigindo a
- * estrutura de árvore AVL para os nós restantes.
- * Retorna o elemento do nó eliminado;
- * Se o nó com a chave indicada não for encontrado, retorna `NULL`, ao invés disso.
- */
-static void *_free_node(Tree *avl_tree, int32_t key)
-{
-	Node aux = *avl_tree; // O nó que será removido.
-	Node parent = NULL;   // O pai do nó que será removido.
-	void *element = NULL; // O elemento que será retornado.
-
-	while (aux != NULL)
-		// Procuramos o nó a ser removido.
-		if (key < aux->key) {
-			parent = aux;
-			aux = aux->left;
-		}
-		else if (key > aux->key) {
-			parent = aux;
-			aux = aux->right;
-		}
-		// Com o nó encontrado, fazemos sua remoção.
-		else {
-			if (aux->left != NULL && aux->right != NULL) {
-				// Dois filhos:
-				/* Buscamos um nó numa das subárvores de um dos lados do nó que será removido para
-				substituir pelo nó atual, e manter a árvore com as propriedades corretas.
-				Nesse caso, estamos em busca do nó com o maior identificador à esquerda do nó que
-				será removido, mas também poderíamos implementar essa substituição buscando o nó com
-				o menor identificador à direita. */
-				Node higher_parent = aux;
-				Node higher = aux->left;
-
-				// Procuramos o nó com o maior identificar e o seu pai.
-				// Note que o maior nó sempre será o último nó mais a direita na subárvore.
-				while (higher->right != NULL) {
-					higher_parent = higher;
-					higher = higher->right;
-				}
-				/* Caso o nó com maior identificador não seja filho do auxiliar (que seria um caso
-				especial no qual apenas deslocariamos a subárvore um nível acima): */
-				if (higher_parent != aux) {
-					higher_parent->right = higher->left; // Movemos a subárvore restante.
-					higher->left = aux->left; // Deslocamos o nó para cima da subárvore.
-				}
-				higher->right = aux->right; // Terminamos de deslocar o nó.
-
-				/* Por fim, anexamos o nó deslocado ao pai do que foi removido (ou, ao topo da
-				árvore). */
-				if (parent == NULL)
-					*avl_tree = higher;
-				else if (parent->left == aux)
-					parent->left = higher;
-				else
-					parent->right = higher;
-			}
-			else if (aux->left == NULL && aux->right == NULL) {
-				// Nenhum filho: Removemos uma folha.
-
-				if (parent == NULL)
-					*avl_tree = NULL; // Se o nó a ser removido for a raíz, basta limpar a árvore.
-
-				// Esquerda / Right
-				else if (parent->left == aux)
-					parent->left = NULL;
-				else
-					parent->right = NULL;
-			}
-			else {
-				// Um filho:
-				// Anexamos a subárvore ao nó pai, substituíndo o nó que foi removido.
-
-				if (parent == NULL)
-					// Se o nó a ser removido for a raíz, a atualizamos para a subárvore do nó.
-					if (aux->left != NULL)
-						*avl_tree = aux->left;
-					else
-						*avl_tree = aux->right;
-
-				// Esquerda / Direita
-				else if (parent->left == aux)
-					if (aux->left != NULL)
-						parent->left = aux->left;
-					else
-						parent->left = aux->right;
-				else {
-					if (aux->left != NULL)
-						parent->right = aux->left;
-					else
-						parent->right = aux->right;
-				}
-			}
-
-			element = aux->element;
-			free(aux); // Com os apontamentos resolvidos, por fim, liberamos o nó.
-
-			break;
-		}
-
-	return element;
-}
-
-
 static void _padding(char ch, int n)
 {
 	uint32_t i;
@@ -276,6 +181,248 @@ static void _print_subtree(Node node, uint32_t level)
 		printf("%d\n", node->key);
 		_print_subtree(node->left, level + 1);
 	}
+}
+
+
+/* Funções auxiliares específicas de uma árvore AVL. */
+
+/* Retorna a altura de um dado nó. */
+static int32_t _get_node_height(Node node)
+{
+	if (node == NULL)
+		return 0;
+
+	return node->height;
+}
+
+
+/* Retorna o fator de balanço de um nó, de acordo com a altura de seus filhos.
+ * Útil para determinar se uma árvore está balanceada ou não.
+ */
+static int32_t _get_node_balance(Node node)
+{
+	if (node == NULL)
+		return 0;
+
+	return _get_node_height(node->left) - _get_node_height(node->right);
+}
+
+
+/* Dada uma subárvore não-vazia, retorna o nó com a chave de menor valor. */
+static Node _get_min_node(Node node)
+{
+	Node current = node;
+
+	while (current->left != NULL)
+		current = current->left;
+
+	return current;
+}
+
+
+#define GET_NEW_HEIGHT(ROOT) MAX(_get_node_height(ROOT->left), _get_node_height(ROOT->right)) + 1
+
+
+/* Função auxiliar que rotaciona uma subárvore de raíz `y` na direita. */
+static Node _right_rotate(Node y)
+{
+	Node x = y->left;
+	Node T2 = x->right;
+
+	// Realiza a rotação.
+	x->right = y;
+	y->left = T2;
+
+	// Atualiza as alturas
+	y->height = GET_NEW_HEIGHT(y);
+	x->height = GET_NEW_HEIGHT(x);
+
+	return x; // `x` será a nova raíz da subárvore.
+}
+
+
+/* Função auxiliar que rotaciona uma subárvore de raíz `x` na esquerda. */
+static Node _left_rotate(Node x)
+{
+	Node y = x->right;
+	Node T2 = y->left;
+
+	// Realiza a rotação
+	y->left = x;
+	x->right = T2;
+
+	// Atualiza as alturas
+	x->height = GET_NEW_HEIGHT(x);
+	y->height = GET_NEW_HEIGHT(y);
+
+	return y; // `y` será a nova raíz da subárvore.
+}
+
+
+// TODO -> Implementar o algoritmo de forma interativa usando o TAD Stack.
+/* Função auxiliar recursiva que realiza a inserção de um nó na subárvore.
+ * Retorna a raíz atualizada dessa subárvore.
+ */
+static Node _insert(Node node, void *element, int32_t key)
+{
+	/* Realiza a inserção normal de uma BST. */
+
+	if (node == NULL) {
+		// Novo nó que será inserido na árvore.
+		Node new = (Node)malloc(sizeof(struct node));
+
+		if (new == NULL)
+			// Como estamos usando recursão não podemos tratar esse erro de memória nessa
+			// profundidade. Etão apenas encerramos a execução.
+			exit(1);
+
+		new->element = element;
+		new->left = NULL;
+		new->right = NULL;
+		new->key = key;
+		new->height = 1;
+		// Um novo nó é sempre uma folha.
+
+		return new;
+	}
+
+	if (key < node->key)
+		node->left = _insert(node->left, element, key);
+	else if (key > node->key)
+		node->right = _insert(node->right, element, key);
+	else
+		return node; // A inserção não é realizada pois a chave já existe.
+
+	// Atualiza a altura do nó atual.
+	node->height = GET_NEW_HEIGHT(node);
+
+	/* Busca o fator de balanço do nó atual para verificar se se tornara desbalanceado. */
+	int32_t balance = _get_node_balance(node);
+
+	// Caso o nó se torne desbalanceado há quatro casos possíveis (1 para cada tipo de rotação):
+
+	// Estamos na esquerda da da árvore.
+	if (balance > 1)
+		// Rotação Direita
+		if (key < node->left->key) {
+			return _right_rotate(node);
+		}
+		// Rotação Dupla Direita
+		else if (key > node->left->key) {
+			node->left = _left_rotate(node->left);
+			return _right_rotate(node);
+		}
+
+	// Estamos na direita da da árvore.
+	if (balance < -1)
+		// Rotação Esquerda
+		if (key > node->right->key) {
+			return _left_rotate(node);
+		}
+		// Rotação Dupla Esquerda
+		else if (key < node->right->key) {
+			node->right = _right_rotate(node->right);
+			return _left_rotate(node);
+		}
+
+	return node; // Retorna o nó sem alterações.
+}
+
+
+// Como usamos uma função recursiva para remover o nó, teríamos 3 soluções para tratar os dados
+// removidos:
+// 1 - Mudar o retorno da função para uma struct contendo o nó atual e os dados que foram removidas;
+// pro: fácil implementação; con: requer que uma struct específica seja declarada para esse caso
+// específico;
+// 2 - Alterar a função para um algoritmo interativo (opção preferida); // TODO
+// pro: não necessita declarar um tipo novo, e ocupa menos espaço na Stack; con: mais difícil de
+// implentar;
+// 3 - Usar uma global estática (no escopo do TAD);
+// pro: mais fácil de implementar, não requer declaração de um tipo novo; con: variável de escopo
+// aberto. <- Essa é opção que decidi implementar no momento.
+static void *_removed_element = NULL;
+
+
+static Node _free_node(Node root, uint8_t key)
+{
+	/* 1. Realiza uma remoção padrão da BST. */
+
+	if (root == NULL)
+		return root;
+
+	if (key < root->key)
+		root->left = _free_node(root->left, key);
+
+	else if (key > root->key)
+		root->right = _free_node(root->right, key);
+
+	else {
+		// Nó com apenas um filho ou sem filhos:
+		if (root->left == NULL || root->right == NULL) {
+			Node tmp = root->left != NULL ? root->left : root->right;
+
+			// `root` é folha.
+			if (tmp == NULL) {
+				tmp = root;
+				root = NULL;
+			}
+			else {
+				*root = *tmp; // Copia o conteúdo da filha que não está vazia para a raíz.
+			}
+
+			// Delegamos os dados do nó removido para ser tratados externamente.
+			_removed_element = tmp->element;
+			free(tmp);
+		}
+		// Nó com dois filhos
+		else {
+			Node tmp = _get_min_node(root->right); // O menor sucessor da direita de `root`.
+			// Copiamos o conteúdo desse sucessor para `root` e removemos este nó.
+			root->key = tmp->key;
+			root->element = tmp->element;
+			root->right = _free_node(root->right, tmp->key);
+		}
+	}
+
+	// Se a raíz tiver sido removida, nada mais precisa ser feito.
+	if (root == NULL)
+		return root;
+
+	/* 2. Atualiza a altura do nó atual. E reestabelecemos o balanceamento, caso necessário. */
+	root->height = GET_NEW_HEIGHT(root);
+
+	int32_t balance = _get_node_balance(root);
+	// Os casos possíveis são os mesmos da inserção:
+
+	if (balance > 1) {
+		int32_t left_balance = _get_node_balance(root->left);
+
+		// Rotação Direita
+		if (left_balance >= 0) {
+			return _right_rotate(root);
+		}
+		// Rotação Dupla Direita
+		else if (left_balance < 0) {
+			root->left = _left_rotate(root->left);
+			return _right_rotate(root);
+		}
+	}
+
+	if (balance < -1) {
+		int32_t right_balance = _get_node_balance(root->right);
+
+		// Rotação Esquerda
+		if (right_balance <= 0) {
+			return _left_rotate(root);
+		}
+		// Rotação Dupla Esquerda
+		else if (right_balance > 0) {
+			root->right = _right_rotate(root->right);
+			return _left_rotate(root);
+		}
+	}
+
+	return root;
 }
 
 
@@ -370,46 +517,7 @@ int8_t insert_node(Tree *avl_tree, void *element, int32_t key)
 	if (avl_tree == NULL)
 		return NULL_ERROR;
 
-	Node new = (Node)malloc(sizeof(struct node));
-
-	if (new == NULL)
-		return NOT_OK;
-
-	new->element = element;
-	new->left = NULL;
-	new->right = NULL;
-	new->key = key;
-	// Um novo nó é sempre uma folha.
-
-	if (*avl_tree == NULL)
-		*avl_tree = new; // Inserimos a raíz da árvore.
-	else {
-		Node aux = *avl_tree;
-		Node parent;
-		// Começamos da raíz e vamos em busca do identificador (matrícula) mais próximo.
-
-		// Procuramos a posição de inserção do novo nó.
-		while (aux != NULL) {
-			parent = aux;
-
-			if (key < parent->key)
-				aux = aux->left;
-			else if (key > parent->key)
-				aux = aux->right;
-			else {
-				/* Não podemos ter identificares iguais. Tentar inserir uma duplicata resultará em
-				erro. */
-				free(new);
-				return INPUT_ERROR;
-			}
-		}
-
-		// Novo nó é conectado ao pai dele na árvore.
-		if (key < parent->key)
-			parent->left = new;
-		else
-			parent->right = new;
-	}
+	*avl_tree = _insert(*avl_tree, element, key);
 
 	return OK;
 }
@@ -431,11 +539,12 @@ int8_t get_node(Tree *avl_tree, int32_t key, void **r_element)
 // int8_t remove_node(Tree *avl_tree, int32_t key, void **r_element)
 // {
 // 	CHECK_TREE(avl_tree)
-// 	*r_element = _free_node(avl_tree, key);
-//
+// 	*avl_tree = _free_node(avl_tree, key);
+// 	*r_element = _removed_element;
+// 
 // 	if (*r_element == NULL)
 // 		return NOT_OK;
-//
+// 
 // 	return OK;
 // }
 
@@ -443,12 +552,15 @@ int8_t get_node(Tree *avl_tree, int32_t key, void **r_element)
 int8_t free_node(Tree *avl_tree, int32_t key)
 {
 	CHECK_TREE(avl_tree)
-	void *element = _free_node(avl_tree, key);
+	*avl_tree = _free_node(*avl_tree, key);
 
-	if (element == NULL)
+	// Assumindo que os dados do nó estavam vazios retornamos uma flag de erro.
+	if (_removed_element == NULL)
 		return NOT_OK;
 
-	free(element);
+	free(_removed_element);
+	_removed_element = NULL;
+
 	return OK;
 }
 
@@ -462,7 +574,7 @@ int8_t is_empty_tree(Tree *avl_tree)
 }
 
 
-int8_t get_tree_higher_node(Tree *avl_tree, void **r_element)
+int8_t get_tree_max_node(Tree *avl_tree, void **r_element)
 {
 	CHECK_TREE(avl_tree)
 	Node higher = *avl_tree;
@@ -471,6 +583,15 @@ int8_t get_tree_higher_node(Tree *avl_tree, void **r_element)
 		higher = higher->right;
 
 	*r_element = higher->element;
+
+	return OK;
+}
+
+
+int8_t get_tree_min_node(Tree *avl_tree, void **r_element)
+{
+	CHECK_TREE(avl_tree)
+	*r_element = _get_min_node(*avl_tree)->element;
 
 	return OK;
 }

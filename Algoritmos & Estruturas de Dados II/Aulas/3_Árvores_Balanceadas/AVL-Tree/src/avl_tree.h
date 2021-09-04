@@ -51,7 +51,8 @@ int8_t insert_node(Tree *, void *, int32_t key);
 // int8_t remove_node(Tree *avl_tree, int32_t key, void **r_element);
 
 /* Remove um nó da árvore, liberando seu conteúdo da memória.
- * Retorno: `NULL_ERROR`, `EMPTY_ERROR`, `NOT_OK`, `OK`.
+ * Retorno: `NULL_ERROR`, `EMPTY_ERROR`, `NOT_OK` (note que se o conteúdo do nó for vazio ele também
+ * retornará essa flag), `OK`.
  */
 int8_t free_node(Tree *avl_tree, int32_t key);
 
@@ -101,7 +102,13 @@ int8_t is_empty_tree(Tree *bt);
  * Note que o maior sempre será o último nó mais à direita na árvore.
  * Retorno: `NULL_ERROR`, `EMPTY_ERROR`, `OK`.
  */
-int8_t get_tree_higher_node(Tree *, void **r_element);
+int8_t get_tree_max_node(Tree *, void **r_element);
+
+/* Acessa o nó com o menor identificador na árvore.
+ * Note que o meno sempre será o último nó mais à esquerda na árvore.
+ * Retorno: `NULL_ERROR`, `EMPTY_ERROR`, `OK`.
+ */
+int8_t get_tree_min_node(Tree *, void **r_element);
 
 /* Retorna a quantidade de folhas da árvore. - Uma folha é um nó que não possui filhos.
  * Se a árvore não existir retorna `NULL_ERROR`, ao invés disso.
