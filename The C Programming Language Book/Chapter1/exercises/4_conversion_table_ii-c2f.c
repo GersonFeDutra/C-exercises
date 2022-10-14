@@ -1,11 +1,13 @@
 #include <stdio.h>
 
 
+/* print Celsius-Fahrenheit table
+     for celsius = 0, 10, 20, ..., 100  */
 int main()
 {
     int lower = 0, upper = 100, step = 10;
     float fahr, celsius = lower;
-    
+
     printf("- C ---- F -\n");
 
     while (celsius <= upper) {

@@ -4,13 +4,14 @@
 /* copy input to output; 1st version */
 int main()
 {
-    int c = getchar();
+    int c;
 
-    while (c != EOF)
-    {
+    c = getchar();
+    while (c != EOF) {
         putchar(c);
         c = getchar();
     }
     
-    return 0;
+    return 0; //
 }
+

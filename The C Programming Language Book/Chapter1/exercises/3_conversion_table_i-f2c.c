@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-// TODO -> Corrigir as tabelas de conversão
+/* print Fahrenheit-Celsius table
+     for fahr = 0, 20, ..., 300 */
 int main()
 {
     int lower = 0, upper = 300, step = 20;
