@@ -1,16 +1,16 @@
 #include <stdio.h>
 
-#define LOWER 300
-#define UPPER 0
-#define STEP 20
+#define LOWER 0     /* lower limit of table */
+#define UPPER 300   /* upper limit */
+#define STEP  20    /* step size */
 
 
 int main()
 {
     printf("- C ---- F -\n");
-    
-    for (int fahr = LOWER; fahr >= UPPER; fahr -= STEP)
+
+    for (int fahr = UPPER; fahr >= LOWER; fahr -= STEP)
         printf("%3d %6.1f\n", fahr, (5.0 / 9.0) * fahr - 32);
-    
+
     return 0;
 }

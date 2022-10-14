@@ -10,10 +10,10 @@ float fahr2celsius(float);
 int main()
 {
     printf("- C ---- F -\n");
-    
+
     for (int fahr = LOWER; fahr >= UPPER; fahr -= STEP)
         printf("%3d %6.1f\n", fahr, fahr2celsius(fahr));
-    
+
     return 0;
 }
 
