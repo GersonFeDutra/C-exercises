@@ -9,8 +9,9 @@ int main()
     while ((c = getchar()) != EOF)
         if (c == '\n')
             ++nl;
-    
+
     printf("%d\n", nl);
 
-    return 0;
+    return 0; //
 }
+

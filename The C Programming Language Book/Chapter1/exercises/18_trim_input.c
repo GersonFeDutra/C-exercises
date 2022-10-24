@@ -4,6 +4,8 @@
 #define FALSE 0
 #define TRUE 1
 
+int get_line_trimmed(char s[], int lim);
+
 
 /* Print longest input line. */
 int main()
@@ -11,7 +13,7 @@ int main()
 	char line[MAX_LINE];
 
 	get_line_trimmed(line, MAX_LINE);
-	printf("\nTrimmed: %s", line);
+	printf("\nTrimmed: %s\n", line);
 
 	return 0;
 }

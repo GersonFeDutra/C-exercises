@@ -45,9 +45,8 @@ int main()
 			}
 		}
 		
-		isoverflow = (
-				overflowed && line[MAXCHAR] != '\n' && line[MAXCHAR] != EOF
-		);
+		isoverflow = \
+				overflowed && line[MAXCHAR] != '\n' && line[MAXCHAR] != EOF;
 	}
 	
 	// there was a line

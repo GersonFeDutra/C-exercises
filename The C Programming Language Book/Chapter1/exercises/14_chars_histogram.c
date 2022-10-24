@@ -3,19 +3,19 @@
 
 int main()
 {
-    const ALPHASIZE = 'Z' - 'A' + 1;
-    const ALL_PHASIZE = 2 * ALPHASIZE;
-    const SIZE = ALL_PHASIZE + ('9' - '0' + 1);
+    const int ALPHASIZE = 'Z' - 'A' + 1;
+    const int ALL_PHASIZE = 2 * ALPHASIZE;
+    const int SIZE = ALL_PHASIZE + ('9' - '0' + 1);
 
     void printline(int);
-    int c, i, j;
+    int c, i;
     int histo[SIZE];
 
     for (i = 0; i < SIZE; ++i)
         histo[i] = 0;
     
     /* Reads the text stream input */
-    while ((c = getchar()) != EOF)
+    while ((c = getchar()) != '\n')
     {
         if (c >= 'A' && c <= 'Z')
             ++histo[c - 'A'];
@@ -30,13 +30,12 @@ int main()
     /* Prints the histogram */
     for (i = 0; i < SIZE; ++i)
 
-        if (histo[i] > 0)
+        if (histo[i] > 0) {
 
             if (i >= 0 && i < ALPHASIZE) {
                 printf("%c:", 'A' + i);
                 printline(histo[i]);
             }
-            
             else if (i >= ALPHASIZE && i < ALL_PHASIZE) {
                 printf("%c:", 'a' + i - ALPHASIZE);
                 printline(histo[i]);
@@ -45,7 +44,8 @@ int main()
                 printf("%c:", '0' + i - ALL_PHASIZE);
                 printline(histo[i]);
             }
-    
+        }
+
     return 0;
 }
 
@@ -59,3 +59,4 @@ void printline(int size)
     
     printf("\n");
 }
+

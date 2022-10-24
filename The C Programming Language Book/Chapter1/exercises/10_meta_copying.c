@@ -5,7 +5,7 @@ int main()
 {
     int c;
 
-    while ((c = getchar()) != EOF) {
+    while ((c = getchar()) != EOF)
 
         switch (c) {
             case '\t': printf("\\t"); break;
@@ -13,6 +13,7 @@ int main()
             case '\\': printf("\\\\"); break;
             default: putchar(c);
         }
-    }
+
     return 0;
 }
+

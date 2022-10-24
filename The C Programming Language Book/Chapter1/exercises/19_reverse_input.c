@@ -2,6 +2,9 @@
 
 #define MAX_LINE 100
 
+int get_line_trimmed(char[], int lim);
+void reverse_line(char from[], char to[], int size);
+
 
 int main()
 {
@@ -9,10 +12,11 @@ int main()
 	int size = get_line_trimmed(line, MAX_LINE);
 
 	reverse_line(line, reversed, size);
-	printf("\nTrimmed and Reversed: %s", reversed);
+        printf("\nTrimmed and Reversed: %s\n", reversed);
 
 	return 0;
 }
+
 
 /* Reverse the string to another; size is the number of characters. */
 void reverse_line(char from[], char to[], int size)

@@ -1,13 +1,13 @@
 #include <stdio.h>
 
-#define MAXLINE 100 /* Maximum input line size */
+#define MAXLINE 100     /* Maximum input line size */
+
+int max;                // maximum length seen so far
+char line[MAXLINE];     // current input line
+char longest[MAXLINE];  // longest line saved here
 
 int get_line(void);
 void copy(void);
-
-int max; // maximum length seen so far
-char line[MAXLINE]; // current input line
-char longest[MAXLINE]; // longest line saved here
 
 
 /* Print longest input line; specialized version. */
@@ -37,12 +37,12 @@ int main()
 	return 0;
 }
 
+
 /* getline: specialized version. */
 int get_line(void)
 {
 	extern char line[];
-	char c;
-	int i;
+	int c, i;
 
 	for (i = 0; (i < MAXLINE - 1) && ( (c = getchar()) != EOF ) && (c != '\n'); ++i)
 		line[i] = c;

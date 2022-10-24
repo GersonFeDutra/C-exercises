@@ -12,7 +12,7 @@ void copy(char to[], char from[]);
 int main()
 {
 	const int MAXCHAR = MAX_LINE - 1; // maximum character index
-	int len, overlen = 0; // current line length
+	int len; // current line length
 	int isoverflow = FALSE; // line is bigger than MAX_LINE
 
 	char line[MAX_LINE]; // current input line
@@ -26,22 +26,15 @@ int main()
 		int overflowed = (len == MAXCHAR); // line is bigger than limit
 		int wasoverflow = isoverflow;
 		
-		if (wasoverflow) {
-			overlen += len;
-		}
-		else {
-			if (overflowed) {
+		if (!wasoverflow && overflowed)
 				copy(overcached, line);
-				overlen = len;
-			}
-		}
+		
 		isoverflow = (
 				overflowed && line[MAXCHAR] != '\n' && line[MAXCHAR] != EOF
 		);
 		
-		if (wasoverflow && !isoverflow) {
+		if (wasoverflow && !isoverflow)
 			printf("\nText: %s...\n", overcached);
-		}
 	}
 
 	return 0;

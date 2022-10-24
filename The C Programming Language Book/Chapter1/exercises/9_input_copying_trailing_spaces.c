@@ -13,5 +13,7 @@ int main()
         putchar(c);
         lastchar = c;
     }
+
     return 0;
 }
+

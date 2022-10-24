@@ -1,14 +1,15 @@
 #include <stdio.h>
 
 
-/* Count characters in input; 1st version. */
+/* Count characters in input; 2nd version. */
 int main()
 {
     double nc;
 
     for (nc = 0; getchar() != EOF; ++nc);
-    
+
     printf("%.0f\n", nc);
 
-    return 0;
+    return 0; //
 }
+

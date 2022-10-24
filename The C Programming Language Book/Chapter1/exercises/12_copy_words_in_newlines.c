@@ -13,11 +13,12 @@ int main()
             if (last_char != ' ' && last_char != '\t')
                 putchar('\n');
         }
-        else{
+        else {
             putchar(c);
         }
         last_char = c;
     }
-    
+
     return 0;
 }
+

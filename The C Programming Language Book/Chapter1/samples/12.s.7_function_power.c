@@ -3,14 +3,16 @@
 int power(int m, int n);
 // int oldpower(); /* Declaração de uma função da antiga ANSI C. */
 
+/* test power function */
 int main()
 {
     int i;
+    printf(" i | ^2 | ^-3\n");
 
     // printf("%d\n", oldpower(12, 2));
 
     for (i = 0; i < 10; ++i)
-        printf("%d %d %d\n", i, power(2, i), power(-3, i));
+        printf("%3d %3d %3d\n", i, power(2, i), power(-3, i));
     
     return 0;
 }
@@ -40,3 +42,4 @@ int power(int base, int n)
 //    
 //     return p;
 // }
+

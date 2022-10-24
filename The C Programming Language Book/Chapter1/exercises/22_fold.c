@@ -6,15 +6,18 @@
 
 int add_to_string(char str[], int len, char c, int at);
 
-/* fold: fold long input lines into two or more shorter lines after the last non-blanck characters
-that occurs before the n-th column of input. Make sure your program does something intelligent with
-very long lines, and if there are no blanks or tabs before the specified column. */
 
+// TODO -> review
+/* Fold:
+ * Fold long input lines into two or more shorter lines after the last non-blank characters
+ * that occurs before the n-th column of input. Make sure your program does something intelligent
+ * with very long lines, and if there are no blanks or tabs before the specified column.
+ */
 int main()
 {
 	const int length = MAXLENGTH - 1;
-	char c, firstline[MAXLENGTH];
-	int i = 0, done = FALSE;
+	char firstline[MAXLENGTH];
+	int c, i = 0, done = FALSE;
 
 	while ((c = getchar()) != EOF) {
 
@@ -29,10 +32,8 @@ int main()
 					firstline[i - 1] = '\0';
 					done = TRUE;
 				}
-				else {
-					if ((i = add_to_string(firstline, length, c, i)) == MAXLENGTH) {
-						done = TRUE;
-					}
+				else if ((i = add_to_string(firstline, length, c, i)) == MAXLENGTH) {
+                    done = TRUE;
 				}
 			}
 		}

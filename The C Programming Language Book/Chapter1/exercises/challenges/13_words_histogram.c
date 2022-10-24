@@ -5,24 +5,30 @@
 #define COLUMNS 50 /* basicaly the max number of columns in the histogram. */
 
 
-main()
+/*
+ * Challenge
+ * Write a program to print a histogram of the frequencies of the length of words in its input.
+ * Vertical version
+ */
+int main()
 {
     int c, i, nwords = 0, count = 0, state = OUT;
     int nletters[COLUMNS]; 
 
     /* The array must be a fixed size, that was a "C problem" I couldn't solve for now */
-    for (i = 0; i < 50; ++i)
+    for (i = 0; i < COLUMNS; ++i)
         nletters[i] = 0;
     
     /* Populating the array with character counts of the typed words */
-    while ((c = getchar()) != EOF) {
+    while ((c = getchar()) != EOF || nwords == COLUMNS) {
 
         if (c == '\n' || c == '\t' || c == ' ' || c == '"') {
 
             if(state != OUT)
                 state = OUT;
         }
-        else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+        //else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+        else {
 
             if (state == OUT) {
 
@@ -37,11 +43,10 @@ main()
     c = OUT;
 
     /* Finding the character count of the longest word */
-    for (i = 0; i < nwords; ++i) {
+    for (i = 0; i < nwords; ++i)
 
         if (c < nletters[i])
             c = nletters[i];
-    }
 
     /* Printing the Histogram Finally */ 
     for (i = c; i > 0; --i) {
@@ -53,6 +58,9 @@ main()
             else
                 printf("- ");
         }
-            printf("\n");
+        printf("\n");
     }
+
+    return 0;
 }
+
