@@ -35,8 +35,7 @@ int main()
 /* Read a line into string `s`, return length. */
 int get_line(char s[], int lim)
 {
-	char c;
-	int i;
+	int c, i;
 
     // We are using `lim - 1` so the last space will be reserved to '\0'
 	for (i = 0; (i < lim - 1) && ((c = getchar()) != EOF) && (c != '\n'); ++i)

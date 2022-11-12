@@ -44,10 +44,9 @@ int main()
 /* Read a line into string `s`, return length (number of characters). */
 int get_line(char s[], int lim)
 {
-	char c;
-	int i;
+	int c, i;
 
-	for (i = 0; (i < lim - 1) && ((c = getchar()) != '\0') && (c != '\n'); ++i)
+	for (i = 0; (i < lim - 1) && ((c = getchar()) != EOF) && (c != '\n'); ++i)
 		s[i] = c;
 	
 	if (c == '\n') {
