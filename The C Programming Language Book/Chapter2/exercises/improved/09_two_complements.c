@@ -1,3 +1,4 @@
+#include "sconvert.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -32,12 +33,13 @@ int main(int argc, char const *argv[])
 	if (argc < 2) {
 		fprintf(stderr,
                 "\033[31mError! Expected at least one binary as arguments.\n"
-                "binary must be at integer form (unsigned).\033[m\n");
+                "Binary may be at int, (16), bit (b10000), octal (o100) or hex (0x10) form)."
+                "\033[m\n");
 		return EXIT_FAILURE;
 	}
 
     for (int i = 1; i < argc; ++i)
-        printf("%d\n", bitcount(atoi(argv[i])));
+        printf("%d\n", bitcount(sconvert(argv[i])));
 
 	return EXIT_SUCCESS;
 }
