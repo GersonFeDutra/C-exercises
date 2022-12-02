@@ -121,7 +121,7 @@ int main() {
         printf("Error! Unclosed brackets.\n");
     if (braces)
         printf("Error! Unclosed braces.\n");
-    # FIXME -> Counting error
+    // FIXME -> Counting error
     if (ON_QUOTES)
         printf("Error! Unclosed quotes at: (row:%lu, col:%lu).\n", quote_row, quote_col);
 }

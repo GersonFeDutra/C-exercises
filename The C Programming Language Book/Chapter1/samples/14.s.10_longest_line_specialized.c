@@ -15,21 +15,21 @@ int main()
 {
 	extern int max;
 	extern char longest[];
-	
+
 	int len; // current line length
 	max = 0;
 
 	while ((len = get_line()) > 0) {
-		
+
 		if (line[0] == '\n' || line[0] == EOF)
 			break;
-		
+
 		if (len > max) {
 			max = len;
 			copy();
 		}
 	}
-	
+
 	// there was a line
 	if (max > 0)
 		printf("%s", longest);
@@ -46,11 +46,9 @@ int get_line(void)
 
 	for (i = 0; (i < MAXLINE - 1) && ( (c = getchar()) != EOF ) && (c != '\n'); ++i)
 		line[i] = c;
-	
-	if (c == '\n') {
-		line[i] = c;
-		++i;
-	}
+
+	if (c == '\n')
+		line[i++] = c;
 
 	line[i] = '\0';
 
@@ -63,7 +61,7 @@ void copy(void)
 {
 	extern char line[], longest[];
 	int i = 0;
-	
+
 	while ( (longest[i] = line[i]) != '\0' )
 		++i;
 }
