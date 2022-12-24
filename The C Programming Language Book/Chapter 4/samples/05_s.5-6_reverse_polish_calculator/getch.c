@@ -2,8 +2,9 @@
 
 #define TRUE 1
 #define FALSE 0
-unsigned short int _buffed = FALSE;
-int _buf;
+
+static unsigned short int _buffed = FALSE;
+static int _buf;
 
 
 /* get a (possibly pushed back) character. */

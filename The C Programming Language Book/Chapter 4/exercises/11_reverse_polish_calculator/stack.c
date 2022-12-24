@@ -2,11 +2,11 @@
 
 #define MAXVAL 100  /* maximum depth of val stack */
 
-int sp = 0;         /* next free stack position */
-double val[MAXVAL]; /* values of stack */
+static int sp = 0;         /* next free stack position */
+static double val[MAXVAL]; /* values of stack */
 
 /* Variables used in the calculator. */
-double pr_var, vars['z' - 'a' + 1];
+static double pr_var, vars['z' - 'a' + 1];
 
 
 /* push: push f onto value stack */
