@@ -6,12 +6,8 @@
 /* getop: get next operator or numeric operand */
 int getop(char s[])
 {
-    static int _buf;
-    static unsigned short int _init_buf = 1;
-    if (_init_buf) {
-        _buf = '\0';
-        _init_buf = 0;
-    }
+    /* note that a static variable is initialized only the first time the block is entered */
+    static int _buf = '\0';
     int i = 0, c;
 
     if (_buf != '\0') {
