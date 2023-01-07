@@ -18,7 +18,7 @@ void strcat(char s[], const char t[])
 int main(int argc, char const *argv[])
 {
     if (argc != 3) {
-        fprintf(stderr, "\033[32mError! Two strings must be passed as arguments.\033[m\n");
+        fprintf(stderr, "\033[31mError! Two strings must be passed as arguments.\033[m\n");
         return EXIT_FAILURE;
     }
 

@@ -8,7 +8,7 @@ int atoi(const char s[])
 {
     double atof_(const char s[]);
 
-	return (int) atof(s);
+	return (int) atof_(s);
 }
 
 
