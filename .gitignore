@@ -1,6 +1,6 @@
 # Executável do Windows
 *.exe
-# Executável genérico (Windows)
+# Executável genérico (Linux)
 *.out
 #*.x86_64
 # LaTeX, papers, e afins
@@ -15,3 +15,9 @@
 *.pyc
 # Binário usado pelo SCons para rastrear arquivos de compilação
 *.sconsign.dblite
+# CMake
+*CMakeFiles*
+*.cmake
+*CMakeCache.txt
+*Makefile
+*so.a
