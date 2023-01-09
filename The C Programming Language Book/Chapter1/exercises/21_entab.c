@@ -6,14 +6,13 @@
 
 
 /* Entab:
- * Replaces strings of blanks by the minimun number of tabs and blanks to achieve the same
+ * Replaces strings of blanks by the minimum number of tabs and blanks to achieve the same
  * spacing. Use the same tab stops as for detab. When either a tab or a single blank would
  * suffice to reach a tab stop, which should be given preference?
  */
 int main()
 {
-	char c;
-	int i, occupied, spaces;
+	int c, i, occupied, spaces;
 	occupied = spaces = 0;
 
 	while ((c = getchar()) != EOF) {
@@ -25,7 +24,7 @@ int main()
 				int cache, tabbed = FALSE;
 				i = occupied + spaces;
 
-				while ((cache = i - TABINC) >= 0) { // WATCH
+				while ((cache = i - TABINC) >= 0) {
 					i = cache;
 					printf("\t");
 					tabbed = TRUE;

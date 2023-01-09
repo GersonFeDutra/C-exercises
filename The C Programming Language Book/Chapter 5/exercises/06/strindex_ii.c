@@ -3,7 +3,7 @@
 
 #define MAXLINE 1000 /* maximum input line length */
 
-int getline_(char s[], int lim);
+int get_line(char s[], int lim);
 
 
 /* strindex: return pointer of t in s, or NULL if not found */
@@ -15,7 +15,7 @@ const char *strindex(const char *s, const char t[])
         for (u = s, i = 0; t[i] != '\0' && *u == t[i]; u++, i++);
 
         if (i > 0 && t[i] == '\0')
-            return u;
+            return s;
     }
 
     return NULL;
@@ -34,7 +34,7 @@ int main(int argc, char const *argv[])
     char line[MAXLINE];
 	int found = 0;
 
-    while (getline_(line, MAXLINE) > 0)
+    while (get_line(line, MAXLINE) > 0)
         if (strindex(line, argv[1]) != NULL) {
             printf("%s", line);
             found++;
@@ -44,8 +44,8 @@ int main(int argc, char const *argv[])
 }
 
 
-/* getline_: get line into s, return length */
-int getline_(char s[], int lim)
+/* get_line: get line into s, return length */
+int get_line(char s[], int lim)
 {
     int c, i;
 

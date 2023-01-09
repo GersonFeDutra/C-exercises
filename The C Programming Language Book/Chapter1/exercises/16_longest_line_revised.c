@@ -20,15 +20,15 @@ int main()
 	char overcached[MAX_LINE]; // cache a overflow line
 
 	while ((len = get_line(line, MAX_LINE)) > 0) {
-		
+
 		if (line[0] == '\n' || line[0] == EOF)
 			break;
-		
+
 		int overflowed = (len == MAXCHAR); // line is bigger than limit
-		
+
 		if (isoverflow) {
 			overlen += len;
-			
+
 			if (overlen > max) {
 				max = overlen;
 				copy(longest, overcached);
@@ -44,19 +44,19 @@ int main()
 				copy(longest, line);
 			}
 		}
-		
+
 		isoverflow = \
 				overflowed && line[MAXCHAR] != '\n' && line[MAXCHAR] != EOF;
 	}
-	
+
 	// there was a line
 	if (max > 0) {
 		printf("Size: %d\n", max - 1);
 		printf("Text: %s", longest);
-		
+
 		if (max > MAX_LINE)
 			printf("...");
-		
+
 		printf("\n");
 	}
 
@@ -71,12 +71,12 @@ int get_line(char s[], int lim)
 
 	for (i = 0; (i < lim - 1) && ((c = getchar()) != EOF) && (c != '\n'); ++i)
 		s[i] = c;
-	
+
 	if (c == '\n') {
 		s[i] = c;
 		++i;
 	}
-	
+
 	s[i] = '\0';
 
 	return i;
@@ -87,7 +87,7 @@ int get_line(char s[], int lim)
 void copy(char to[], char from[])
 {
 	int i = 0;
-	
+
 	while ((to[i] = from[i]) != '\0')
 		++i;
 }

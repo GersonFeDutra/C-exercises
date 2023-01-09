@@ -24,7 +24,7 @@ int main()
 
 			for (i = 0; i < (TABINC - occupied); ++i)
 				putchar('#'); // replace it with a blank space!
-			
+
 			occupied = 0;
 		}
 		else {

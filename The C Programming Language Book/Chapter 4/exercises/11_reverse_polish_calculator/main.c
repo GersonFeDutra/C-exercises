@@ -4,9 +4,9 @@
 #include <math.h>
 
 
-/* reverse Polish calculator
- * Our getch and ungetch do not handle a pushed-back EOF correctly.
- * Decide what their properties ought to be if an EOF is pushed back, then implement your design. */
+/* Reverse Polish calculator: version 9
+ * Modify getop so that it doesn't need to use ungetch.
+ * Hint: use an internal static variable. */
 int main(void)
 {
     int type;
