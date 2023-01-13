@@ -11,7 +11,7 @@ void writelines(char *lineptr[], int nlines);
 void quicksort(char *lineptr[], int left, int right);
 
 
-/* sort input lines */
+/* sort input lines (lexigraphically) */
 int main(void)
 {
     int nlines; /* number of input lines read */
