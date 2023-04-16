@@ -117,15 +117,11 @@ int strfcmp(const char *s, const char *t)
 /* numcmp: compare s1 and s2 numerically */
 int numcmp(const char *s1, const char *s2)
 {
-    double v1 = atof(s1), v2 = atof(s2);
-
-    return (v1 - v2) / abs(v1 - v2);
-    /* equivalent to the comparisons above: */
-    // if (v1 < v2)
-        // return -1;
-    // else if (v1 > v2)
-        // return 1;
-    // return 0;
+    if (s1 < s2)
+        return -1;
+    else if (s1 > s2)
+        return 1;
+    return 0;
 }
 
 

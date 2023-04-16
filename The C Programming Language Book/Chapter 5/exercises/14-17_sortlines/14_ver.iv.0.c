@@ -1,49 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 #define MAXLINES 5000    /* max #lines to be sorted */
 char *lineptr[MAXLINES]; /* pointers to text lines */
 
-int readlines(char *lineptr[], int n, unsigned short dir);
-void writelines(char *lineptr[], int n);
+int readlines(char *lineptr[], int nlines);
+void writelines(char *lineptr[], int nlines);
 
-void quicksort(void *v[], int left, int right,
-        int (*comp)(const void *, const void *), unsigned short reverse);
+void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *),
+        unsigned short reverse);
 int numcmp(const char *, const char *);
-int strfcmp(const char *, const char *);
 
 
 /* sort input lines (lexigraphically or numerically)
- * Add the -d ("directory order") option, which makes comparison only on
- * letters, numbers and blanks. Make sure it works in conjunction with -f */
-int main(int argc, const char *argv[]) {
-    enum options {
-        NONE, NUMERIC = 1, REVERSE = 2, FOLD_CASE = 4, DIRECTORY = 8
-    } option = NONE;
+ * Modify the sort program to handle a -r flag, which indicates sorting in reverse
+ * (decreasing) order. Be sure that -r works with -n. */
+int main(int argc, char *argv[]) {
     int nlines;  /* number of input lines read */
+    int numeric = 0; /* 1 if numeric sort */
+    int reverse = 0; /* 1 if reverse sort */
 
     while (--argc)
         if (**++argv == '-')
             while (*++*argv)
                 switch (**argv) {
-                    case 'n': option |= NUMERIC;   break; /* numeric sort */
-                    case 'r': option |= REVERSE;   break; /* reverse sort */
-                    case 'f': option |= FOLD_CASE; break; /* case insensitive */
-                    case 'd': option |= DIRECTORY; break;
-                            /* letters, numbers, ., -, _ and blanks only */
+                    case 'n': numeric = 1; break;
+                    case 'r': reverse = 1; break;
                     default:
                         fprintf(stderr, "\033[33m""Warning: Unknow option %s.\033[m\n", *argv);
                         break;
                 }
 
-    if ((nlines = readlines(lineptr, MAXLINES, option & DIRECTORY)) >= 0) {
+    if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
         quicksort((void **)lineptr, 0, nlines - 1,
-                (int (*)(const void *, const void *))(
-                    (option & NUMERIC) ? numcmp : (
-                        (option & FOLD_CASE) ? strfcmp : strcmp) ),
-                (option & REVERSE));
+                (int (*)(const void *, const void *))(numeric ? numcmp : strcmp), reverse);
         writelines(lineptr, nlines);
 
         return EXIT_SUCCESS;
@@ -62,8 +53,8 @@ static short reverse_sort;
 /* quicksort: sort v[left]...v[right] into increasing order.
  * this is not the fastest version of quick sort.
  * this method complexity: O(n²) */
-void quicksort(void *v[], int left, int right,
-        int (*comp)(const void *, const void *), unsigned short reverse)
+void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *),
+        unsigned short reverse)
 {
     void _quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *));
 
@@ -105,88 +96,15 @@ void swap(void *v[], int i, int j)
 }
 
 
-/* strfcmp: return <0 if s<t, 0 if s==t, >0 if s>t: case insensitive
- * folds the case of the letters, that is, eg.: a = A */
-int strfcmp(const char *s, const char *t)
-{
-    for (; *s == *t || (*s >= 'a' && *s <= 'z' && *s - 'a' + 'A' == *t)
-            || (*s >= 'A' && *s <= 'Z' && *s - 'A' + 'a' == *t); s++, t++)
-        if (*s == '\0')
-            return 0;
-
-    return *s - *t;
-}
-
-
 /* numcmp: compare s1 and s2 numerically */
 int numcmp(const char *s1, const char *s2)
 {
-    int v1 = atoi(s1);
-    int v2 = atoi(s2);
-
-    if (v1 < v2)
+    if (s1 < s2)
         return -1;
-    else if (v1 > v2)
+    else if (s1 > s2)
         return 1;
-    else
-        return 0;
-}
 
-
-#include <ctype.h>
-
-#define MAXLEN 1000     /* max length of any input line */
-
-int get_line(char *, int);
-int get_dir(char *, int);
-char *alloc(int);
-
-
-/* readlines: read input lines */
-int readlines(char *lineptr[], int maxlines, unsigned short dir)
-{
-    int (*get)(char *, int) = dir ? get_dir : get_line;
-    int len, nlines, n = 0;
-    char *p, line[MAXLEN];
-
-    nlines = 0;
-    while ((len = get(line, MAXLEN)) != 0) {
-        n++;
-        if (len < 0)
-            fprintf(stderr, "\033[33m""Warning: line \n#%d: %s\n\tis not a valid file name. "
-                    "Skipping...\033[m\n", n, line);
-        else if (nlines >= maxlines || (p = alloc(len)) == NULL)
-            return -1;
-        else {
-            line[len - 1] = '\0'; /* delete newline */
-            strcpy(p, line);
-            lineptr[nlines++] = p;
-        }
-    }
-
-    return nlines;
-}
-
-
-/* Read a line into string `s`, return length.
- * return negative length if `s` is not a file name. */
-int get_dir(char s[], int lim)
-{
-	int c, i, isdir = 1;
-
-	for (i = 0; (i < lim - 1) && ((c = getchar()) != EOF) && (c != '\n'); ++i) {
-        s[i] = c;
-
-        if (!isalpha(c) && !isdigit(c) && !isblank(c) && c != '.' && c != '_' && c != '-')
-            isdir = -1;
-    }
-
-	if (c == '\n')
-		s[i++] = c;
-
-	s[i] = '\0';
-
-	return i * isdir;
+    return 0;
 }
 
 
@@ -204,6 +122,32 @@ int get_line(char s[], int lim)
 	s[i] = '\0';
 
 	return i;
+}
+
+
+#define MAXLEN 1000     /* max length of any input line */
+
+int get_line(char *, int);
+char *alloc(int);
+
+
+/* readlines: read input lines */
+int readlines(char *lineptr[], int maxlines)
+{
+    int len, nlines;
+    char *p, line[MAXLEN];
+
+    nlines = 0;
+    while ((len = get_line(line, MAXLEN)) > 0)
+        if (nlines >= maxlines || (p = alloc(len)) == NULL)
+            return -1;
+        else {
+            line[len - 1] = '\0'; /* delete newline */
+            strcpy(p, line);
+            lineptr[nlines++] = p;
+        }
+
+    return nlines;
 }
 
 

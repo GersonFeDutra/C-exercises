@@ -8,33 +8,19 @@ char *lineptr[MAXLINES]; /* pointers to text lines */
 int readlines(char *lineptr[], int nlines);
 void writelines(char *lineptr[], int nlines);
 
-void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *),
-        unsigned short reverse);
+void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *));
 int numcmp(const char *, const char *);
 
 
-/* sort input lines (lexigraphically or numerically)
- * Modify the sort program to handle a -r flag, which indicates sorting in reverse
- * (decreasing) order. Be sure that -r works with -n. */
+/* sort input lines (lexigraphically or numerically) */
 int main(int argc, char *argv[]) {
     int nlines;  /* number of input lines read */
-    int numeric = 0; /* 1 if numeric sort */
-    int reverse = 0; /* 1 if reverse sort */
-
-    while (--argc)
-        if (**++argv == '-')
-            while (*++*argv)
-                switch (**argv) {
-                    case 'n': numeric = 1; break;
-                    case 'r': reverse = 1; break;
-                    default:
-                        fprintf(stderr, "\033[33m""Warning: Unknow option %s.\033[m\n", *argv);
-                        break;
-                }
+    int numeric; /* 1 if numeric sort */
+    numeric = argc > 1 && strcmp(argv[1], "-n") == 0;
 
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
         quicksort((void **)lineptr, 0, nlines - 1,
-                (int (*)(const void *, const void *))(numeric ? numcmp : strcmp), reverse);
+                (int (*)(const void *, const void *))(numeric ? numcmp : strcmp));
         writelines(lineptr, nlines);
 
         return EXIT_SUCCESS;
@@ -47,24 +33,10 @@ int main(int argc, char *argv[]) {
 }
 
 
-static short reverse_sort;
-
-
 /* quicksort: sort v[left]...v[right] into increasing order.
  * this is not the fastest version of quick sort.
  * this method complexity: O(n²) */
-void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *),
-        unsigned short reverse)
-{
-    void _quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *));
-
-    reverse_sort = reverse ? 1 : -1;
-    _quicksort(v, left, right, comp);
-}
-
-
-/* quick sort routine called by the helper method above */
-void _quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *))
+void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *))
 {
     int i, last;
     void swap(void *v[], int, int);
@@ -76,12 +48,12 @@ void _quicksort(void *v[], int left, int right, int (*comp)(const void *, const 
     last = left;
 
     for (i = left + 1; i <= right; i++) /* partition */
-        if (comp(v[i], v[left]) * reverse_sort > 0)
+        if (comp(v[i], v[left]) < 0)
             swap(v, ++last, i);
 
     swap(v, left, last); /* restore partition */
-    _quicksort(v, left, last - 1, comp);
-    _quicksort(v, last + 1, right, comp);
+    quicksort(v, left, last - 1, comp);
+    quicksort(v, last + 1, right, comp);
 }
 
 
@@ -99,15 +71,15 @@ void swap(void *v[], int i, int j)
 /* numcmp: compare s1 and s2 numerically */
 int numcmp(const char *s1, const char *s2)
 {
-    double v1 = atof(s1), v2 = atof(s2);
+    int v1 = atoi(s1);
+    int v2 = atoi(s2);
 
-    return (v1 - v2) / abs(v1 - v2);
-    /* equivalent to the comparisons above: */
-    // if (v1 < v2)
-        // return -1;
-    // else if (v1 > v2)
-        // return 1;
-    // return 0;
+    if (v1 < v2)
+        return -1;
+    else if (v1 > v2)
+        return 1;
+    else
+        return 0;
 }
 
 

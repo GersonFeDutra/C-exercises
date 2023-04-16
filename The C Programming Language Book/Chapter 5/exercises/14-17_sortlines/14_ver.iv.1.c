@@ -10,17 +10,32 @@ void writelines(char *lineptr[], int nlines);
 
 void quicksort(void *v[], int left, int right, int (*comp)(const void *, const void *));
 int numcmp(const char *, const char *);
+int rnumcmp(const char *s1, const char *s2);
 
 
-/* sort input lines (lexigraphically or numerically) */
+/* sort input lines (lexigraphically or numerically)
+ * Modify the sort program to handle a -r flag, which indicates sorting in
+ * reverse (decreasing order). Be sure that -r works with -n
+ */
 int main(int argc, char *argv[]) {
     int nlines;  /* number of input lines read */
+    // REFACTOR -> Use a settings enum with bitmask.
     int numeric; /* 1 if numeric sort */
-    numeric = argc > 1 && strcmp(argv[1], "-n") == 0;
+    int reverse; /* 1 if reverse order */
+    reverse = numeric = 0;
+
+    while (--argc)
+        if (**++argv == '-')
+            while (*++*argv != '\0')
+                switch (**argv) {
+                    case 'n': numeric = 1; break;
+                    case 'r': reverse = 1; break;
+                }
 
     if ((nlines = readlines(lineptr, MAXLINES)) >= 0) {
         quicksort((void **)lineptr, 0, nlines - 1,
-                (int (*)(const void *, const void *))(numeric ? numcmp : strcmp));
+                (int (*)(const void *, const void *))(
+                    numeric ? ( reverse ? rnumcmp : numcmp ) : strcmp));
         writelines(lineptr, nlines);
 
         return EXIT_SUCCESS;
@@ -71,14 +86,30 @@ void swap(void *v[], int i, int j)
 /* numcmp: compare s1 and s2 numerically */
 int numcmp(const char *s1, const char *s2)
 {
-    double v1 = atof(s1), v2 = atof(s2);
+    int v1 = atoi(s1);
+    int v2 = atoi(s2);
 
-    return (v1 - v2) / abs(v1 - v2);
-    /* equivalent to the comparisons above: */
-    // if (v1 < v2)
-        // return -1;
-    // else if (v1 > v2)
-        // return 1;
+    if (v1 < v2)
+        return -1;
+    else if (v1 > v2)
+        return 1;
+    else
+        return 0;
+}
+
+
+/* rnumcmp: compare s1 and s2 numerically in reverse order */
+int rnumcmp(const char *s1, const char *s2)
+{
+    int v1 = atoi(s1);
+    int v2 = atoi(s2);
+
+    if (v1 < v2)
+        return 1;
+    else if (v1 > v2)
+        return -1;
+    else
+        return 0;
 }
 
 
