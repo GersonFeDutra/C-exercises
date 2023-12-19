@@ -6,8 +6,8 @@
 void serial_pi();
 void parallel_pi();
 
-#define N_STEPS 300000000
-#define THREADS_N 4
+#define N_STEPS 100000000
+#define MAX(A, B) (((A) > (B)) ? (A) : (B))
 
 
 int main () {
@@ -57,7 +57,8 @@ void parallel_pi(int num_steps)
     step = 1.0 / (double) num_steps;
     sum = 0.0f;
 
-#pragma omp parallel private(x) num_threads(THREADS_N)
+    int n_procs = MAX(1, omp_get_num_procs() - 1);
+#pragma omp parallel private(x) num_threads(n_procs)
     {
     #pragma omp for reduction (+:sum)
         for (int i = 0; i < num_steps; i++) {
