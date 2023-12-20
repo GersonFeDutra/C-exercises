@@ -99,7 +99,7 @@ void insertion_sort_wh_cache(int *array, unsigned int size)
 
 	for (i = 1; i < size; ++i) {
 		int j = i;
-		int lj = j - 1;
+		register int lj = j - 1;
 
 		while (j > 0 && array[lj] > array[j]) {
 			int swap = array[j];
