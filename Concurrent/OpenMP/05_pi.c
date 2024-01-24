@@ -32,7 +32,7 @@ int main () {
 
     double speedup = t_serial / t_parallel;
     printf("\nSpeedup: %.4f\n", speedup);
-    printf("Efficiency: %.4f\n", speedup / THREADS_N);
+    printf("Efficiency: %.4f\n", speedup / MAX(1, omp_get_num_procs() - 1));
 }
 
 

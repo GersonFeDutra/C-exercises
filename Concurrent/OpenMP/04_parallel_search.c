@@ -4,6 +4,8 @@
 #include <time.h>
 
 #define SIZE 99999999
+
+/* Note: fixed threads num not recommended */
 #define THREADS_N 4
 
 void serial_search(int, int *, size_t);
@@ -60,13 +62,13 @@ void parallel_search(int n, int *at, size_t len)
 #pragma omp parallel num_threads(THREADS_N)
     {
     #pragma omp for
-        for (int *p = at; p != at + len; p++) {
-            if (found)
+		for (int *p = at + omp_get_thread_num(); p != at + len; p += omp_get_num_threads()) {
+			if (found)
                 continue;
             if (*p == n) {
                 printf("Thread[%d] ACHOU: %d\n", omp_get_thread_num(), *p);
                 found = 1;
             }
-        }
-    }
+		}
+	}
 }
