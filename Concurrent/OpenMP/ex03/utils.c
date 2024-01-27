@@ -1,6 +1,7 @@
+#include "utils.h"
+#include <stdlib.h>
 #include <time.h>
 #include <errno.h>
-#include "utils.h"
 
 int msleep(long msec)
 {
@@ -21,4 +22,9 @@ int msleep(long msec)
     } while (res && errno == EINTR);
 
     return res;
+}
+
+void randomize(void) {
+    time_t t;
+    srand((unsigned) time(&t));
 }

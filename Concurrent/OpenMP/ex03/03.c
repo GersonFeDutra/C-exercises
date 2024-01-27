@@ -15,6 +15,9 @@ x, encontrar quantas vezes x ocorre no vetor. Calcular as métricas de desempenh
 */
 int main(void)
 {
+    randomize();
+    printf("Loading...\n");
+
     unsigned threads = max(omp_get_num_procs() - 1, 1);
     int *arr = i_generate(SIZE, MAX);
     int target = rand() % MAX;

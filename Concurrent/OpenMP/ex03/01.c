@@ -1,7 +1,8 @@
 #include "benchmark.h"
 #include "utils.h"
-#include <omp.h>
 #include "generator.h"
+#include <omp.h>
+#include <stdio.h>
 
 #define THRESHOLD 20
 #define MAX 300
@@ -14,9 +15,11 @@ apresentados anteriormente. Utilize 20 iterações para um melhor entendimento.
 - guided: em partes iguais
 - auto: automático
  */
-#include <stdio.h>
 int main(void)
 {
+	randomize();
+	printf("Loading...\n");
+
     unsigned threads = max(omp_get_num_procs() - 1, 1);
 	long *times = l_generate(THRESHOLD, MAX);
 

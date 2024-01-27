@@ -22,11 +22,10 @@ int main(void)
     void critical_medium(int *, size_t), atomic_medium(int *, size_t);
     void sections_medium(int *, size_t), sections3_medium(int *, size_t);
 
-    time_t t;
-    srand((unsigned) time(&t)); // Starting random number generator
     threads_num = max(omp_get_num_procs() - 1, 1);
-
     printf("Loading...\n");
+    randomize();
+
     int *arr = i_generate(SIZE, SIZE);
 
     start("Serial");

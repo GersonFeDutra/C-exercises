@@ -19,9 +19,7 @@ Quais variáveis são compartilhadas entre as threads, e quais são privadas?
  */
 int main(void)
 {
-    time_t t;
-    srand((unsigned) time(&t)); // Starting random number generator
-
+    randomize();
     unsigned threads = max(omp_get_num_procs() - 1, 1);
     unsigned num = rand_range(MIN, MAX);
     unsigned long long sum = 0;

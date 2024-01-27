@@ -6,3 +6,6 @@
 
 /* msleep(): Sleep for the requested number of milliseconds. */
 int msleep(long msec);
+
+/* Starting random number generator */
+void randomize();

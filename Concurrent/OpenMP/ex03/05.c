@@ -21,9 +21,6 @@ int main(void)
     void pi_critical(int), pi_atomic(int);
     void pi_sections(int);
 
-    time_t t;
-    srand((unsigned) time(&t)); // Starting random number generator
-
     start("Serial");
     pi_serial(N_STEPS);
 
