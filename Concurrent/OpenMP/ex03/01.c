@@ -28,35 +28,35 @@ int main(void)
 
 	next("Default");
 #pragma omp parallel for num_threads(threads)
-	for (int i = omp_get_thread_num(); i <= THRESHOLD; i += threads)
+	for (int i = 0; i <= THRESHOLD; i++)
 	{
 		msleep(times[i]);
 	}
 
 	next("Static");
 #pragma omp parallel for num_threads(threads) schedule(static)
-	for (int i = omp_get_thread_num(); i <= THRESHOLD; i += threads)
+	for (int i = 0; i <= THRESHOLD; i++)
 	{
 		msleep(times[i]);
 	}
 
 	next("Dynamic");
 #pragma omp parallel for num_threads(threads) schedule(dynamic)
-	for (int i = omp_get_thread_num(); i <= THRESHOLD; i += threads)
+	for (int i = 0; i <= THRESHOLD; i++)
 	{
 		msleep(times[i]);
 	}
 
 	next("Guided");
 #pragma omp parallel for num_threads(threads) schedule(guided)
-	for (int i = omp_get_thread_num(); i <= THRESHOLD; i += threads)
+	for (int i = 0; i <= THRESHOLD; i++)
 	{
 		msleep(times[i]);
 	}
 
 	next("Auto");
 #pragma omp parallel for num_threads(threads) schedule(auto)
-	for (int i = omp_get_thread_num(); i <= THRESHOLD; i += threads)
+	for (int i = 0; i <= THRESHOLD; i++)
 	{
 		msleep(times[i]);
 	}

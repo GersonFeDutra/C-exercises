@@ -6,7 +6,7 @@
 #define SIZE 99999999
 
 /* Note: fixed threads num not recommended */
-#define THREADS_N 4
+// #define THREADS_N 4
 
 void serial_search(int, int *, size_t);
 void parallel_search(int, int *, size_t);
@@ -41,34 +41,31 @@ int main () {
     printf("Time parallel: %f\n", t_parallel);
 
     double speedup = t_serial / t_parallel;
-    printf("\nSpeedup: %.4f\n", speedup);
-    printf("Efficiency: %.4f\n", speedup / THREADS_N);
+    printf("\nThreads used: %d\n", omp_get_num_procs());
+    printf("Speedup: %.4f\n", speedup);
+    printf("Efficiency: %.4f\n", speedup / omp_get_num_procs());
 }
 
 
 void serial_search(int n, int *at, size_t len)
 {
-	for (int *p = at; p != at + len; p++)
+	for (int *p = at; p < (at + len); p++) {
 		if (*p == n) {
 			printf("Thread[%d] ACHOU: %d\n", omp_get_thread_num(), *p);
-			break;
+			// break;
 		}
+    }
 }
 
 
 void parallel_search(int n, int *at, size_t len)
 {
-    unsigned found = 0;
-#pragma omp parallel num_threads(THREADS_N)
-    {
-    #pragma omp for
-		for (int *p = at + omp_get_thread_num(); p != at + len; p += omp_get_num_threads()) {
-			if (found)
-                continue;
-            if (*p == n) {
-                printf("Thread[%d] ACHOU: %d\n", omp_get_thread_num(), *p);
-                found = 1;
-            }
-		}
-	}
+    char flag = 0;
+#pragma omp parallel for shared(flag) num_threads(omp_get_num_procs()) 
+    for (int *p = at; p < (at + len); p++) {
+        if (flag) continue;
+        if (*p == n) {
+            printf("Thread[%d] ACHOU: %d\n", omp_get_thread_num(), *p);
+        }
+    }
 }

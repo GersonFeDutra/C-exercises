@@ -25,19 +25,19 @@ int main(void)
         if (arr[i] == target)
             count++;
     stop();
-    printf("%d was found %lu times\n", target, count);
+    printf("\t%d was found %lu times\n", target, count);
     count = 0;
 
     back("Parallel");
 #pragma omp parallel num_threads(threads)
-{
-#pragma omp for reduction(+:count)
-	for (int i = 0; i < SIZE; ++i)
-		if (arr[i] == target)
-			count++;
-}
+    {
+    #pragma omp for reduction(+:count)
+    for (int i = 0; i < SIZE; ++i)
+        if (arr[i] == target)
+            count++;
+    }
     stop();
-    printf("%d was found %lu times\n", target, count);
+    printf("\t%d was found %lu times\n", target, count);
 
     benchmark(threads, true);
 }

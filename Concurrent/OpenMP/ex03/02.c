@@ -2,9 +2,11 @@
 #include "utils.h"
 #include <omp.h>
 #include <stdio.h>
+#include <time.h>
 
 #define MAX 2000000000
 #define MIN 1000000000
+
 /* Escreva um programa em C, com OpenMP, que dado um número maior do que 1.000.000.000 (um bilhão),
 calcular a soma de todos os seus divisores.
 
@@ -17,6 +19,9 @@ Quais variáveis são compartilhadas entre as threads, e quais são privadas?
  */
 int main(void)
 {
+    time_t t;
+    srand((unsigned) time(&t)); // Starting random number generator
+
     unsigned threads = max(omp_get_num_procs() - 1, 1);
     unsigned num = rand_range(MIN, MAX);
     unsigned long long sum = 0;
@@ -44,53 +49,49 @@ int main(void)
 
     back("Critic region");
 #pragma omp parallel num_threads(threads)
-{
-#pragma omp for
-{
-    for (int i = num - omp_get_thread_num(); i > 0; i -= threads)
+    {
+    #pragma omp for
+    for (int i = num; i > 0; i--)
         if (num % i == 0)
-#pragma omp critical
-{
+        #pragma omp critical
             sum += i;
-}
-}
-}
+    }
     stop();
     printf("\ttotal: %llu\n", sum);
 	sum = 0;
 
-    back("Reduction");
+    back("Reduction (default)");
 #pragma omp parallel num_threads(threads)
-{
-#pragma omp for reduction(+:sum)
-	for (int i = num; i > 0; i--)
+    {
+    #pragma omp for reduction(+:sum)
+    for (int i = num; i > 0; i--)
         if (num % i == 0)
             sum += i;
-}
+    }
     stop();
     printf("\ttotal: %llu\n", sum);
 	sum = 0;
 
     back("Reduction (static)");
-#pragma omp parallel num_threads(threads) schedule(static)
-{
-#pragma omp for reduction(+:sum)
+#pragma omp parallel num_threads(threads)
+    {
+    #pragma omp for schedule(static) reduction(+:sum)
     for (int i = num; i > 0; i--)
         if (num % i == 0)
             sum += i;
-}
+    }
     stop();
     printf("\ttotal: %llu\n", sum);
 	sum = 0;
 
     back("Reduction (dynamic)");
-#pragma omp parallel for num_threads(threads) schedule(static)
-{
-#pragma omp for reduction(+:sum)
+#pragma omp parallel num_threads(threads)
+    {
+    #pragma omp for schedule(dynamic) reduction(+:sum)
     for (int i = num; i > 0; i--)
         if (num % i == 0)
             sum += i;
-}
+    }
     stop();
     printf("\ttotal: %llu\n", sum);
 	sum = 0;
