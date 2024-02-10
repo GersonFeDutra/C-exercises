@@ -11,6 +11,7 @@
 int main(void)
 {
     fprintf(stderr, "\033[33m""Loading...\n\033[m");
+    randomize();
 
     unsigned threads = max(omp_get_num_procs() - 1, 1);
     float *data = f_generate(N, MAX);
