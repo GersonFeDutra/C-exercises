@@ -1,3 +1,12 @@
 [submodule "Algoritmos & Estruturas de Dados II/Aulas/3_Árvores_Balanceadas/AVL-Tree/lib/termcolor-c"]
 	path = Algoritmos & Estruturas de Dados II/Aulas/3_Árvores_Balanceadas/AVL-Tree/lib/termcolor-c
 	url = https://github.com/ararslan/termcolor-c
+[submodule "Sistemas Operacionais/ex08_semaphores"]
+	path = Sistemas Operacionais/ex08_semaphores
+	url = git@github.com:GersonFeDutra/so_atv8_locks_semaphores.git
+[submodule "Algoritmos em Grafos"]
+	path = Algoritmos em Grafos
+	url = git@github.com:GersonFeDutra/Graphs.git
+[submodule "Concurrent/mp-projects"]
+	path = Concurrent/mp-projects
+	url = git@github.com:slottwo/mp-projects.git
