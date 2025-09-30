@@ -19,8 +19,14 @@
     } Material;
 
     typedef struct {
+        float r, g, b, a;
+    } Color;
+    #define color_as_gl_float_ptr(c) (GLfloat*)(&c.r)
+
+    typedef struct {
         float x, y, z;
     } Vec3;
+    #define vec3_as_gl_float_ptr(v) (GLfloat*)(&v.x)
 
     typedef struct {
         float u, v;
@@ -29,6 +35,7 @@
     typedef struct {
         int vertex[3];
         int vertex_texture[3];
+        int vertex_normal[3];
         int material_id; // índice do material para essa face (ou -1)
     } Face;
 #pragma endregion
@@ -38,12 +45,13 @@
     #pragma region Buffers
         Vec3* vertices = NULL;
         Vec2* texcoords = NULL;
+        Vec3* normals = NULL;
         Face* faces = NULL;
     #pragma endregion
 
-    size_t vertex_count = 0, texcoord_count = 0, face_count = 0;
+    size_t vertex_count = 0, texcoord_count = 0, normal_count = 0, face_count = 0;
     // capacidades internas (mantém estado entre chamadas)
-    static size_t vertex_cap = 0, texcoord_cap = 0, face_cap = 0;
+    static size_t vertex_cap = 0, texcoord_cap = 0, normal_cap = 0, face_cap = 0;
 
     GLuint textureID = 0;
 
@@ -147,6 +155,32 @@ static void ensure_tex_cap(size_t add, FILE *f) {
     }
 }
 
+/**
+ * @brief Ensure that the normal buffer has enough capacity to store 'add' more normals.
+ * If the buffer needs to be resized, it is doubled in size until it can hold
+ * at least 'normal_count + add' normals.
+ * If the reallocation fails, an error message is printed and the file is closed (if given).
+ * The program then exits with code 1.
+ * @param add The number of normals that need to be stored in the buffer.
+ * @param f The file to be closed in case of reallocation failure. May be NULL.
+ */
+static void ensure_normal_cap(size_t add, FILE *file) {
+    if (normal_count + add > normal_cap) {
+        size_t newcap = (normal_cap == 0) ? 1024 : normal_cap;
+        while (normal_count + add > newcap) newcap *= 2;
+        Vec3* tmp = (Vec3*)realloc(normals, newcap * sizeof(Vec3));
+        if (!tmp) {
+            fprintf(stderr,"realloc failed for normals\n");
+            if (file)
+                fclose(file);
+            exit(1);
+        }
+        normals = tmp;
+        normal_cap = newcap;
+    }
+}
+
+
 static void ensure_face_cap(size_t add, FILE *f) {
     if (face_count + add > face_cap) {
         size_t newcap = (face_cap == 0) ? 1024 : face_cap;
@@ -194,6 +228,28 @@ static int material_add(const char* name) {
     if (name) strncpy(materials[material_count].name, name, MAX_MAT_NAME-1);
     materials[material_count].name[MAX_MAT_NAME-1] = '\0';
     return (int)(material_count++);
+}
+
+/**
+ * @brief Calcula a normal de uma face (unitária).
+ * 
+ * @param a Primeira aresta do triângulo.
+ * @param b Segunda aresta do triângulo.
+ * @param c Terceira aresta do triângulo.
+ * @param out Normal calculada (unitária).
+ *
+ * A normal é calculada como o produto vetorial das arestas do triângulo.
+ * Se a normal for zero (ou seja muito pequena), a saída será (0,0,0).
+ */
+static void compute_face_normal(const Vec3 *a, const Vec3 *b, const Vec3 *c, Vec3 *out) {
+    float ux = b->x - a->x, uy = b->y - a->y, uz = b->z - a->z;
+    float vx = c->x - a->x, vy = c->y - a->y, vz = c->z - a->z;
+    out->x = uy * vz - uz * vy;
+    out->y = uz * vx - ux * vz;
+    out->z = ux * vy - uy * vx;
+    float len = sqrtf(out->x*out->x + out->y*out->y + out->z*out->z);
+    if (len > 1e-9f) { out->x/=len; out->y/=len; out->z/=len; }
+    else { out->x = out->y = out->z = 0.0f; }
 }
 #pragma endregion
 
@@ -392,6 +448,7 @@ int loadOBJ(const char *filename) {
     }
 
     char line[1024];
+    size_t ignored_count = 0;
     int current_material = -1; // índice do material atual nas faces; default -1
 
     bool is_unsupported_format = false;
@@ -436,30 +493,32 @@ int loadOBJ(const char *filename) {
             // parsing robusto (suporta v/vt/vn, v//vn, v/vt, v v v)
             Face face;
             face.material_id = current_material; // atribui o material atual
-            int vertex[3], vertex_texture[3], vn[3];
+            int vertex[3], vertex_texture[3], vertex_normal[3];
 
             // Tenta v/vt/vn
             int matches = sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d",
-                                &vertex[0], &vertex_texture[0], &vn[0],
-                                &vertex[1], &vertex_texture[1], &vn[1],
-                                &vertex[2], &vertex_texture[2], &vn[2]);
+                                &vertex[0], &vertex_texture[0], &vertex_normal[0],
+                                &vertex[1], &vertex_texture[1], &vertex_normal[1],
+                                &vertex[2], &vertex_texture[2], &vertex_normal[2]);
             if (matches == 9) {
                 for (int j = 0; j < 3; ++j) {
-                    face.vertex[j]  = vertex[j];
+                    face.vertex[j] = vertex[j];
                     face.vertex_texture[j] = vertex_texture[j];
+                    face.vertex_normal[j] = vertex_normal[j];
                 }
                 ensure_face_cap(1, f);
                 faces[face_count++] = face;
             } else {
                 // Tenta v//vn
                 matches = sscanf(line, "f %d//%d %d//%d %d//%d",
-                                &vertex[0], &vn[0],
-                                &vertex[1], &vn[1],
-                                &vertex[2], &vn[2]);
+                                &vertex[0], &vertex_normal[0],
+                                &vertex[1], &vertex_normal[1],
+                                &vertex[2], &vertex_normal[2]);
                 if (matches == 6) {
                     for (int j = 0; j < 3; ++j) {
                         face.vertex[j]  = vertex[j];
                         face.vertex_texture[j] = vertex_texture[j];
+                        face.vertex_normal[j] = vertex_normal[j];
                     }
                     ensure_face_cap(1, f);
                     faces[face_count++] = face;
@@ -473,6 +532,7 @@ int loadOBJ(const char *filename) {
                         for (int j = 0; j < 3; j++) {
                             face.vertex[j]  = vertex[j];
                             face.vertex_texture[j] = vertex_texture[j];
+                            face.vertex_normal[j] = 0;
                         }
                         ensure_face_cap(1, f);
                         faces[face_count++] = face;
@@ -482,7 +542,7 @@ int loadOBJ(const char *filename) {
                         if (matches == 3) {
                             for (int j = 0; j < 3; ++j) {
                                 face.vertex[j]  = vertex[j];
-                                face.vertex_texture[j] = 0;
+                                face.vertex_normal[j] = face.vertex_texture[j] = 0;
                             }
                             ensure_face_cap(1, f);
                             faces[face_count++] = face;
@@ -495,14 +555,63 @@ int loadOBJ(const char *filename) {
                 }
             }
         }
-        /* outras linhas (vn, usemtl, o, s, etc.) ignoradas aqui */
+        else if (line[0]=='v' && line[1]=='n') {
+            Vec3 n;
+            if (sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z) == 3) {
+                ensure_normal_cap(1, f);
+                normals[normal_count++] = n;
+            }
+        }
+        else {
+            /* outras linhas (o, s, etc.) ignoradas aqui */
+            if (!isblank(*line) && line[0] != EOF)
+                ++ignored_count;
+        }
     }
     if (is_unsupported_format) {
         fprintf(stderr, "Formato de arquivo desconhecido na leitura das faces\n");
         return EXIT_FAILURE;
     }
+    if (ignored_count)
+        printf("%zu linhas ignoradas\n", ignored_count);
 
     fclose(f);
+
+    #pragma region Patch Missing Normals
+    for (size_t i = 0; i < face_count; ++i) { // percorre faces
+        bool any_invalid = false;
+        for (int j = 0; j < 3; ++j) {
+            int vn_idx = faces[i].vertex_normal[j]; // seu código usa 1-based
+            if (vn_idx <= 0 || vn_idx > (int)normal_count) {
+                any_invalid = true;
+                break;
+            }
+        }
+
+        if (!any_invalid) continue; // face já tem todas as normals válidas
+
+        // calcula normal da face (a, b, c são posições)
+        Vec3 a = vertices[ faces[i].vertex[0] - 1 ];
+        Vec3 b = vertices[ faces[i].vertex[1] - 1 ];
+        Vec3 c = vertices[ faces[i].vertex[2] - 1 ];
+        Vec3 fn;
+        compute_face_normal(&a, &b, &c, &fn);
+
+        // anexa normal à lista de normals e obtenha índice 1-based
+        ensure_normal_cap(1, NULL);
+        normals[normal_count] = fn;
+        normal_count++;
+        int new_normal_index = (int)normal_count; // 1-based index para OBJ-style
+
+        // preencha apenas as posições de vertex_normal inválidas com esse índice
+        for (int j = 0; j < 3; ++j) {
+            int vn_idx = faces[i].vertex_normal[j];
+            if (vn_idx <= 0 || vn_idx > (int)normal_count-1) {
+                faces[i].vertex_normal[j] = new_normal_index;
+            }
+        }
+    }
+    #pragma endregion
 
     /* Opcional: reduzir (shrink) as alocações para o tamanho real */
     #pragma region Shrink allocations
@@ -518,6 +627,13 @@ int loadOBJ(const char *filename) {
             if (tmp) {
                 texcoords = tmp;
                 texcoord_cap = texcoord_count;
+            }
+        }
+        if (normal_cap > normal_count) {
+            Vec3* tmp = (Vec3*)realloc(normals, (normal_count ? normal_count : 1) * sizeof(Vec3));
+            if (tmp) {
+                normals = tmp;
+                normal_cap = normal_count;
             }
         }
         if (face_cap > face_count) {
@@ -544,33 +660,82 @@ void display() {
     glLoadIdentity();
     gluLookAt(0, 2, 6,   0, 0, 0,   0, 1, 0);
 
-    // aplica centralização e rotação
-    glTranslatef(-center[0], -center[1], -center[2]);
-    glRotatef(angle, 0.0f, 1.0f, 0.0f);
-
     // habilitar transparência
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_DEPTH_TEST);
 
     //glDisable(GL_ALPHA_TEST);
     // Remover artefatos - descartar pixels totalmente transparentes (para folhas)
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.01f); // descarta pixels com alpha baixo
 
+#pragma region Lighting
+    //glDisable(GL_LIGHTING); // Mas eu quero... depois
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHT2);
+
+    Color lightColor = (Color){1.0f, 0.5f, 0.5f, 1.0f}; // White light
+    Vec3 light_pos = { 0.0f, 0.5f, 0.0f};
+
+    glLightfv(GL_LIGHT0, GL_POSITION, vec3_as_gl_float_ptr(light_pos));
+    glLightfv(GL_LIGHT0, GL_AMBIENT, color_as_gl_float_ptr(lightColor));   // Ambient light
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, color_as_gl_float_ptr(lightColor));   // Diffuse light
+    glLightfv(GL_LIGHT0, GL_SPECULAR, color_as_gl_float_ptr(lightColor));  // Specular light
+
+    glPushMatrix();
+        glTranslatef(light_pos.x, light_pos.y, light_pos.z);
+        glutSolidTeapot(0.1f);
+    glPopMatrix();
+
+    light_pos.x = -1.0f; light_pos.y = 1.5f; light_pos.z = -2.0f;
+    glLightfv(GL_LIGHT0, GL_POSITION, vec3_as_gl_float_ptr(light_pos));
+
+    lightColor.r = 0.5f; lightColor.g = 1.0f; lightColor.b = 0.5f; // green
+    glLightfv(GL_LIGHT1, GL_AMBIENT, color_as_gl_float_ptr(lightColor));   // Ambient light
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, color_as_gl_float_ptr(lightColor));   // Diffuse light
+    glLightfv(GL_LIGHT1, GL_SPECULAR, color_as_gl_float_ptr(lightColor));  // Specular light
+
+    glPushMatrix();
+        glTranslatef(light_pos.x, light_pos.y, light_pos.z);
+        glutSolidTeapot(0.1f);
+    glPopMatrix();
+
+    light_pos.x = -light_pos.x; light_pos.z = -light_pos.z; // inverte x e z
+    lightColor.r = 0.5f; lightColor.g = 0.5f; lightColor.b = 1.0f; // blue
+    glLightfv(GL_LIGHT2, GL_POSITION, vec3_as_gl_float_ptr(light_pos));
+
+    glLightfv(GL_LIGHT2, GL_AMBIENT, color_as_gl_float_ptr(lightColor));   // Ambient light
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, color_as_gl_float_ptr(lightColor));   // Diffuse light
+    glLightfv(GL_LIGHT2, GL_SPECULAR, color_as_gl_float_ptr(lightColor));  // Specular light
+
+    glPushMatrix();
+        glTranslatef(light_pos.x, light_pos.y, light_pos.z);
+        glutSolidTeapot(0.1f);
+    glPopMatrix();
+
+    //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+#pragma endregion
+
 #pragma region Draw Model
     glPushMatrix();
-
     // opcional: transformar modelo para centralizar/escala
     // glTranslatef(...); glScalef(...);
 
-    glEnable(GL_DEPTH_TEST);
+    // aplica centralização e rotação
+    glTranslatef(-center[0], -center[1], -center[2]);
+    glRotatef(angle, 0.0f, 1.0f, 0.0f);
 
-    glDisable(GL_LIGHTING); // Mas eu quero... depois
     glColor3f(1, 1, 1); // garante que a textura não seja multiplicada por cor preta ou modulação
 
     // Bind da textura principal (use o certo por material)
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_NORMALIZE);
 
+    bool fallbacked = false;
     int last_mat = -2; // inválido inicialmente
     for  (size_t i = 0; i < face_count; i++) {
         int material_id = faces[i].material_id;
@@ -587,15 +752,23 @@ void display() {
 
         // desenha a face i (3 vértices)
         for (int j = 0; j < 3; j++) {
-            int vi = faces[i].vertex[j] - 1;
+            // Texture Coordinates
             int vti = faces[i].vertex_texture[j] - 1;
-
             if (vti >= 0 && vti < (int)texcoord_count) {
                 Vec2 t = texcoords[vti];
                 glTexCoord2f(t.u, t.v);
             } else {
+                // fallback
                 glTexCoord2f(0.0f, 0.0f);
             }
+
+            // Normals
+            int ni = faces[i].vertex_normal[j] - 1;
+            Vec3 n = normals[ni];
+            glNormal3f(n.x, n.y, n.z);
+
+            // Faces
+            int vi = faces[i].vertex[j] - 1; // .obj é 1-based
             Vec3 v = vertices[vi];
             glVertex3f(v.x, v.y, v.z);
         }
@@ -604,6 +777,7 @@ void display() {
         glEnd();
 
     glDisable(GL_TEXTURE_2D);
+
     glPopMatrix();
 #pragma endregion
 
@@ -614,7 +788,6 @@ void display() {
 
     glutSwapBuffers();
 }
-
 
 void reshape(int width, int height) {
     glViewport(0, 0, width, height);
