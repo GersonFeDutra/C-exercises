@@ -44,19 +44,15 @@
 
     #pragma region Buffers
         Vec3* vertices = NULL;
-        Vec2* texcoords = NULL;
+        Vec2* texture_coords = NULL;
         Vec3* normals = NULL;
+        Material* materials = NULL;
         Face* faces = NULL;
     #pragma endregion
 
-    size_t vertex_count = 0, texcoord_count = 0, normal_count = 0, face_count = 0;
+    size_t vertex_count = 0, texture_coords_count = 0, normals_count = 0, materials_count = 0, faces_count = 0;
     // capacidades internas (mantém estado entre chamadas)
-    static size_t vertex_cap = 0, texcoord_cap = 0, normal_cap = 0, face_cap = 0;
-
-    GLuint textureID = 0;
-
-    Material* materials = NULL;
-    static size_t material_count = 0, material_cap = 0;
+    static size_t vertex_cap = 0, tex_coords_cap = 0, normal_cap = 0, face_cap = 0, material_cap = 0;
 
     #pragma region Animation
         float angle = 0.0f;
@@ -68,8 +64,8 @@
     #pragma endregion
 #pragma endregion
 
-#pragma region Helpers
-/* helper: verifica se path é absoluto (Unix ou Windows) */
+#pragma region Utils
+/* utility: verifica se path é absoluto (Unix ou Windows) */
 static int is_absolute_path(const char *p) {
     if (!p || !*p) return 0;
 #if defined(_WIN32) || defined(_WIN64)
@@ -83,7 +79,7 @@ static int is_absolute_path(const char *p) {
 #endif
 }
 
-/* helper: junta base_dir + sep + filename em out (outsize bytes) */
+/* utility: junta base_dir + sep + filename em out (outsize bytes) */
 static void join_path(const char *base_dir, const char *sep, const char *name, char *out, size_t outsize) {
     if (!base_dir || !*base_dir) {
         // sem base, usar name direto
@@ -122,9 +118,11 @@ static void trim_and_strip_quotes(char *s) {
         s[len-2] = '\0';
     }
 }
+#pragma endregion
 
 /*--- Funções estáticas auxiliares ---*/
-/* Todas fecham o arquivo e chamam exit(1) em caso de falha de realoc. */
+#pragma region Helper Methods
+/* Todas fecham o arquivo e chamam exit(1) em caso de falha de realloc. */
 static void ensure_vertex_cap(size_t add, FILE *f) {
     if (vertex_count + add > vertex_cap) {
         size_t newcap = (vertex_cap == 0) ? 1024 : vertex_cap;
@@ -141,33 +139,33 @@ static void ensure_vertex_cap(size_t add, FILE *f) {
 }
 
 static void ensure_tex_cap(size_t add, FILE *f) {
-    if (texcoord_count + add > texcoord_cap) {
-        size_t newcap = (texcoord_cap == 0) ? 1024 : texcoord_cap;
-        while (texcoord_count + add > newcap) newcap *= 2;
-        Vec2* tmp = (Vec2*)realloc(texcoords, newcap * sizeof(Vec2));
+    if (texture_coords_count + add > tex_coords_cap) {
+        size_t newcap = (tex_coords_cap == 0) ? 1024 : tex_coords_cap;
+        while (texture_coords_count + add > newcap) newcap *= 2;
+        Vec2* tmp = (Vec2*)realloc(texture_coords, newcap * sizeof(Vec2));
         if (!tmp) {
-            fprintf(stderr, "realloc failed for texcoords\n");
+            fprintf(stderr, "realloc failed for texture_coords\n");
             if (f) fclose(f);
             exit(1);
         }
-        texcoords = tmp;
-        texcoord_cap = newcap;
+        texture_coords = tmp;
+        tex_coords_cap = newcap;
     }
 }
 
 /**
  * @brief Ensure that the normal buffer has enough capacity to store 'add' more normals.
  * If the buffer needs to be resized, it is doubled in size until it can hold
- * at least 'normal_count + add' normals.
+ * at least 'normals_count + add' normals.
  * If the reallocation fails, an error message is printed and the file is closed (if given).
  * The program then exits with code 1.
  * @param add The number of normals that need to be stored in the buffer.
  * @param f The file to be closed in case of reallocation failure. May be NULL.
  */
 static void ensure_normal_cap(size_t add, FILE *file) {
-    if (normal_count + add > normal_cap) {
+    if (normals_count + add > normal_cap) {
         size_t newcap = (normal_cap == 0) ? 1024 : normal_cap;
-        while (normal_count + add > newcap) newcap *= 2;
+        while (normals_count + add > newcap) newcap *= 2;
         Vec3* tmp = (Vec3*)realloc(normals, newcap * sizeof(Vec3));
         if (!tmp) {
             fprintf(stderr,"realloc failed for normals\n");
@@ -182,9 +180,9 @@ static void ensure_normal_cap(size_t add, FILE *file) {
 
 
 static void ensure_face_cap(size_t add, FILE *f) {
-    if (face_count + add > face_cap) {
+    if (faces_count + add > face_cap) {
         size_t newcap = (face_cap == 0) ? 1024 : face_cap;
-        while (face_count + add > newcap) newcap *= 2;
+        while (faces_count + add > newcap) newcap *= 2;
         Face* tmp = (Face*)realloc(faces, newcap * sizeof(Face));
         if (!tmp) {
             fprintf(stderr, "realloc failed for faces\n");
@@ -198,9 +196,9 @@ static void ensure_face_cap(size_t add, FILE *f) {
 
 /* util: garantir capacidade para materiais */
 static void ensure_material_cap(size_t add) {
-    if (material_count + add > material_cap) {
+    if (materials_count + add > material_cap) {
         size_t newcap = (material_cap == 0) ? 8 : material_cap;
-        while (material_count + add > newcap) newcap *= 2;
+        while (materials_count + add > newcap) newcap *= 2;
         Material* tmp = (Material*)realloc(materials, newcap * sizeof(Material));
         if (!tmp) {
             fprintf(stderr, "realloc failed for materials\n");
@@ -211,10 +209,10 @@ static void ensure_material_cap(size_t add) {
     }
 }
 
-/* procura material por nome, retorna -1 se não achar */
+/* Procura material por nome, retorna -1 se não achar */
 static int material_find(const char* name) {
     if (!name) return -1;
-    for (size_t i = 0; i < material_count; ++i) {
+    for (size_t i = 0; i < materials_count; ++i) {
         if (strcmp(materials[i].name, name) == 0) return (int)i;
     }
     return -1;
@@ -223,11 +221,11 @@ static int material_find(const char* name) {
 /* adiciona material (sem textura ainda). retorna índice */
 static int material_add(const char* name) {
     ensure_material_cap(1);
-    materials[material_count].texture_id = 0;
-    materials[material_count].name[0] = '\0';
-    if (name) strncpy(materials[material_count].name, name, MAX_MAT_NAME-1);
-    materials[material_count].name[MAX_MAT_NAME-1] = '\0';
-    return (int)(material_count++);
+    materials[materials_count].texture_id = 0;
+    materials[materials_count].name[0] = '\0';
+    if (name) strncpy(materials[materials_count].name, name, MAX_MAT_NAME-1);
+    materials[materials_count].name[MAX_MAT_NAME-1] = '\0';
+    return (int)(materials_count++);
 }
 
 /**
@@ -254,8 +252,16 @@ static void compute_face_normal(const Vec3 *a, const Vec3 *b, const Vec3 *c, Vec
 #pragma endregion
 
 #pragma region Loaders
-// --- Função para carregar textura com stb_image ---
-GLuint loadTexture(const char *filename) {
+/**
+ * @brief Carrega uma textura com o stb_image e retorna o GLuint da textura carregada.
+ * 
+ * @param filename Nome do arquivo da textura.
+ * 
+ * Carrega uma textura com o stb_image e cria um GLuint para ela.
+ * Se houver algum erro, imprime uma mensagem de erro e fecha o programa.
+ * 
+ * @return GLuint id da textura carregada.
+GLuint load_texture(const char *filename) {
     int width, height, channels;
     unsigned char *data = stbi_load(filename, &width, &height, &channels, 4);
     if (!data) {
@@ -276,9 +282,10 @@ GLuint loadTexture(const char *filename) {
     stbi_image_free(data);
     return texture_id;
 }
+ */
 
 /* Carrega o MTL e resolve o caminho da textura relativo ao diretório do próprio MTL */
-void loadMTL(const char *mtl_fullpath) {
+void load_mtl(const char *mtl_fullpath) {
     FILE *f = fopen(mtl_fullpath, "r");
     if (!f) {
         fprintf(stderr, "Erro abrindo MTL: %s\n", mtl_fullpath);
@@ -351,7 +358,7 @@ void loadMTL(const char *mtl_fullpath) {
                 }
             #pragma endregion
 
-            // 2.1 como fallback, tente apenas o nome no cwd (tex_name_raw)
+            // 2.1 Como fallback, tente apenas o nome no cwd (tex_name_raw)
             // Tentaremos abrir candidate, se falhar vamos tentar tex_name_raw
             #pragma region Fallback
                 // DEBUG: imprimir o que vamos tentar
@@ -373,7 +380,7 @@ void loadMTL(const char *mtl_fullpath) {
                 }
             #pragma endregion
 
-            // 3. carregar imagem com stb_image
+            // 3. Carregar imagem com stb_image
             #pragma region Load Image
                 int width, height, channels;
                 unsigned char *data = stbi_load(candidate, &width, &height, &channels, 4);
@@ -384,7 +391,7 @@ void loadMTL(const char *mtl_fullpath) {
                 }
             #pragma endregion
 
-            // criar textura OpenGL (exemplo mínimo)
+            // 4. Criar textura OpenGL (exemplo mínimo)
             #pragma region Create Texture
                 GLuint texture_id;
                 glGenTextures(1, &texture_id);
@@ -413,11 +420,11 @@ void loadMTL(const char *mtl_fullpath) {
 }
 
 /* --- Carregar .obj usando realloc growth strategy e as funções acima --- */
-int loadOBJ(const char *filename) {
+int load_obj(const char *filename) {
     /* Se já existirem dados de uma carga anterior, liberamos para recarregar */
     if (vertices) { free(vertices); vertices = NULL; vertex_count = 0; vertex_cap = 0; }
-    if (texcoords) { free(texcoords); texcoords = NULL; texcoord_count = 0; texcoord_cap = 0; }
-    if (faces) { free(faces); faces = NULL; face_count = 0; face_cap = 0; }
+    if (texture_coords) { free(texture_coords); texture_coords = NULL; texture_coords_count = 0; tex_coords_cap = 0; }
+    if (faces) { free(faces); faces = NULL; faces_count = 0; face_cap = 0; }
 
     // Calcule o diretório base do arquivo .obj (por ex. "Tree" para "Tree/Tree.obj")
     #pragma region Base Directory
@@ -460,13 +467,13 @@ int loadOBJ(const char *filename) {
                 ensure_vertex_cap(1, f);
                 vertices[vertex_count++] = v;
             }
-        } else if (line[0] == 'v' && line[1] == 't') { // texcoords
+        } else if (line[0] == 'v' && line[1] == 't') { // texture_coords
             Vec2 t;
             /* vt u v  (v pode faltar em alguns OBJs) */
             if (sscanf(line, "vt %f %f", &t.u, &t.v) >= 1) {
                 if (sscanf(line, "vt %f %f", &t.u, &t.v) != 2) t.v = 0.0f;
                 ensure_tex_cap(1, f);
-                texcoords[texcoord_count++] = t;
+                texture_coords[texture_coords_count++] = t;
             }
         } else if (strncmp(line, "mtllib", 6) == 0) { // mtllib
             char mtl_file[512] = {0};
@@ -475,7 +482,7 @@ int loadOBJ(const char *filename) {
 
                 // se o mtl_file já for um caminho absoluto, join_path deixa como está
                 join_path(base_dir, sep, mtl_file, fullmtl, sizeof(fullmtl));
-                loadMTL(fullmtl); // isso pode adicionar materiais
+                load_mtl(fullmtl); // isso pode adicionar materiais
             }
         } else if (strncmp(line, "usemtl", 6) == 0) {
             char material_name[512] = {0};
@@ -507,7 +514,7 @@ int loadOBJ(const char *filename) {
                     face.vertex_normal[j] = vertex_normal[j];
                 }
                 ensure_face_cap(1, f);
-                faces[face_count++] = face;
+                faces[faces_count++] = face;
             } else {
                 // Tenta v//vn
                 matches = sscanf(line, "f %d//%d %d//%d %d//%d",
@@ -521,7 +528,7 @@ int loadOBJ(const char *filename) {
                         face.vertex_normal[j] = vertex_normal[j];
                     }
                     ensure_face_cap(1, f);
-                    faces[face_count++] = face;
+                    faces[faces_count++] = face;
                 } else {
                     // Tenta v/vt
                     matches = sscanf(line, "f %d/%d %d/%d %d/%d",
@@ -535,7 +542,7 @@ int loadOBJ(const char *filename) {
                             face.vertex_normal[j] = 0;
                         }
                         ensure_face_cap(1, f);
-                        faces[face_count++] = face;
+                        faces[faces_count++] = face;
                     } else {
                         // Tenta v v v
                         matches = sscanf(line, "f %d %d %d", &vertex[0], &vertex[1], &vertex[2]);
@@ -545,7 +552,7 @@ int loadOBJ(const char *filename) {
                                 face.vertex_normal[j] = face.vertex_texture[j] = 0;
                             }
                             ensure_face_cap(1, f);
-                            faces[face_count++] = face;
+                            faces[faces_count++] = face;
                         }
                         else {
                             // formato não suportado (ngon etc.) -> ignorar
@@ -559,7 +566,7 @@ int loadOBJ(const char *filename) {
             Vec3 n;
             if (sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z) == 3) {
                 ensure_normal_cap(1, f);
-                normals[normal_count++] = n;
+                normals[normals_count++] = n;
             }
         }
         else {
@@ -578,11 +585,11 @@ int loadOBJ(const char *filename) {
     fclose(f);
 
     #pragma region Patch Missing Normals
-    for (size_t i = 0; i < face_count; ++i) { // percorre faces
+    for (size_t i = 0; i < faces_count; ++i) { // percorre faces
         bool any_invalid = false;
         for (int j = 0; j < 3; ++j) {
             int vn_idx = faces[i].vertex_normal[j]; // seu código usa 1-based
-            if (vn_idx <= 0 || vn_idx > (int)normal_count) {
+            if (vn_idx <= 0 || vn_idx > (int)normals_count) {
                 any_invalid = true;
                 break;
             }
@@ -599,14 +606,14 @@ int loadOBJ(const char *filename) {
 
         // anexa normal à lista de normals e obtenha índice 1-based
         ensure_normal_cap(1, NULL);
-        normals[normal_count] = fn;
-        normal_count++;
-        int new_normal_index = (int)normal_count; // 1-based index para OBJ-style
+        normals[normals_count] = fn;
+        normals_count++;
+        int new_normal_index = (int)normals_count; // 1-based index para OBJ-style
 
         // preencha apenas as posições de vertex_normal inválidas com esse índice
         for (int j = 0; j < 3; ++j) {
             int vn_idx = faces[i].vertex_normal[j];
-            if (vn_idx <= 0 || vn_idx > (int)normal_count-1) {
+            if (vn_idx <= 0 || vn_idx > (int)normals_count-1) {
                 faces[i].vertex_normal[j] = new_normal_index;
             }
         }
@@ -622,25 +629,25 @@ int loadOBJ(const char *filename) {
                 vertex_cap = vertex_count;
             }
         }
-        if (texcoord_cap > texcoord_count) {
-            Vec2* tmp = (Vec2*)realloc(texcoords, (texcoord_count ? texcoord_count : 1) * sizeof(Vec2));
+        if (tex_coords_cap > texture_coords_count) {
+            Vec2* tmp = (Vec2*)realloc(texture_coords, (texture_coords_count ? texture_coords_count : 1) * sizeof(Vec2));
             if (tmp) {
-                texcoords = tmp;
-                texcoord_cap = texcoord_count;
+                texture_coords = tmp;
+                tex_coords_cap = texture_coords_count;
             }
         }
-        if (normal_cap > normal_count) {
-            Vec3* tmp = (Vec3*)realloc(normals, (normal_count ? normal_count : 1) * sizeof(Vec3));
+        if (normal_cap > normals_count) {
+            Vec3* tmp = (Vec3*)realloc(normals, (normals_count ? normals_count : 1) * sizeof(Vec3));
             if (tmp) {
                 normals = tmp;
-                normal_cap = normal_count;
+                normal_cap = normals_count;
             }
         }
-        if (face_cap > face_count) {
-            Face* tmp = (Face*)realloc(faces, (face_count ? face_count : 1) * sizeof(Face));
+        if (face_cap > faces_count) {
+            Face* tmp = (Face*)realloc(faces, (faces_count ? faces_count : 1) * sizeof(Face));
             if (tmp) {
                 faces = tmp;
-                face_cap = face_count;
+                face_cap = faces_count;
             }
         }
     #pragma endregion
@@ -735,9 +742,8 @@ void display() {
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_NORMALIZE);
 
-    bool fallbacked = false;
     int last_mat = -2; // inválido inicialmente
-    for  (size_t i = 0; i < face_count; i++) {
+    for  (size_t i = 0; i < faces_count; i++) {
         int material_id = faces[i].material_id;
         // se mudou o material -> terminar batch e iniciar novo
         if (material_id != last_mat) {
@@ -745,7 +751,7 @@ void display() {
                 glEnd(); // finaliza batch anterior
             }
             // iniciar novo batch
-            glBindTexture(GL_TEXTURE_2D, (material_id >= 0 && material_id < (int)material_count) ? materials[material_id].texture_id : 0);
+            glBindTexture(GL_TEXTURE_2D, (material_id >= 0 && material_id < (int)materials_count) ? materials[material_id].texture_id : 0);
             glBegin(GL_TRIANGLES);
             last_mat = material_id;
         }
@@ -754,8 +760,8 @@ void display() {
         for (int j = 0; j < 3; j++) {
             // Texture Coordinates
             int vti = faces[i].vertex_texture[j] - 1;
-            if (vti >= 0 && vti < (int)texcoord_count) {
-                Vec2 t = texcoords[vti];
+            if (vti >= 0 && vti < (int)texture_coords_count) {
+                Vec2 t = texture_coords[vti];
                 glTexCoord2f(t.u, t.v);
             } else {
                 // fallback
@@ -822,20 +828,20 @@ int main(int argc, char **argv)
     const char* obj_file = "Tree/Tree.obj";
     if (argc == 2)
         obj_file = argv[1];
-    int err = loadOBJ(obj_file);
+    int err = load_obj(obj_file);
     if (err != EXIT_SUCCESS) {
         fprintf(stderr, "Erro ao carregar o OBJ: %d\n", err);
         return err;
     }
     else {
-        printf("OBJ carregado: %zu vertices, %zu texcoords, %zu faces\n",
-            vertex_count, texcoord_count, face_count);
+        printf("OBJ carregado: %zu vertices, %zu texture_coords, %zu faces\n",
+            vertex_count, texture_coords_count, faces_count);
         for (size_t i = 0; i < 5 && i < vertex_count; i++) {
             printf("v[%zu] = (%.2f, %.2f, %.2f)\n", i,
                 vertices[i].x, vertices[i].y, vertices[i].z);
         }
-        printf("Materials loaded: %zu\n", material_count);
-        for (size_t i = 0; i < material_count; ++i) {
+        printf("Materials loaded: %zu\n", materials_count);
+        for (size_t i = 0; i < materials_count; ++i) {
             printf("  material_id[%zu] name='%s' texture_id=%u\n", i, materials[i].name, (unsigned)materials[i].texture_id);
         }
     }
