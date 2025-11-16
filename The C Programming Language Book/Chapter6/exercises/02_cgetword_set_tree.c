@@ -34,13 +34,13 @@ const char *keytab[] = {
 
 int getword(char *, int);
 
-/* variable frequency count
+/** variable frequency count
  * Write a program that reads a C program and prints in alphabetical order each
  * group of variables names that are identical in the first 6 characters, but
  * different somewhere thereafter.
  * Don't count words within strings and comments.
  * Make 6 a parameter that can be set from command line.
- */
+ **/
 int main(int argc, char const *argv[])
 {
 	struct set_tnode *root, *addset(struct set_tnode *, char *, int);

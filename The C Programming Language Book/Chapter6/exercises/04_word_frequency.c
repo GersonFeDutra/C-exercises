@@ -5,19 +5,11 @@
 
 #define MAXWORD 100
 
-struct element {
-    size_t ln;               /* line number on which the element occurs */
-    size_t cn;               /* line column on which the element occurs */
-    struct element *next; /* the next element of the list */
-}; /* an element from a list of line numbers */
-
 struct tnode { /* the tree node */
     char *word;               /* points to the text */
     int count;                /* #of occurrences */
     struct tnode *left;       /* left node */
     struct tnode *right;      /* right node */
-    struct element *lns_list; /* list of coordinates on which the word occurs */
-    struct element *list_end; /* last element of lns_list, to ease insertion */
 };
 
 const char *noise_words[] = {
@@ -34,21 +26,37 @@ int binsearch(const char *, const char *[], int);
 int getword(char *word, int lim, size_t *ln, size_t *cn);
 void tree_print(struct tnode *);
 
-/** cross-referencer
- * write a program that print a list of all words in a document, and, for each
- * word, a list of the line numbers on which it occurs. Remove noise words like
- * "the", "and", and so on.
+/** Write a program that prints the distinct words in its input
+ * sorted into decreasing order of frequency of occurrence.
+ * Precede each word by its count.
+ * 
+ * @note Usage: [-x] remove noise words.
  **/
-int main(void)
+int main(int argc, char const *argv[])
 {
+    #define bool int
+    #define true 1
+    #define false 0
+
     struct tnode *root;
 	char word[MAXWORD];
     size_t ln, cn;
 
+    bool remove_noise = false;
+    if (argc != 1)
+        remove_noise = *argv[1] == '-' && *(argv[1] + 1) == 'x';
+
     root = NULL;
-    while (getword(word, MAXWORD, &ln, &cn) != EOF)
-        if (isalpha(word[0]) && binsearch(word, noise_words, NKEYS) == NOMATCH)
-            root = addtree(root, word, ln, cn);
+    if (remove_noise) {
+        while (getword(word, MAXWORD, &ln, &cn) != EOF)
+            if (isalpha(word[0]) && binsearch(word, noise_words, NKEYS) == NOMATCH)
+                root = addtree(root, word, ln, cn);
+    }
+    else {
+        while (getword(word, MAXWORD, &ln, &cn) != EOF)
+            if (isalpha(word[0]))
+                root = addtree(root, word, ln, cn);
+    }
     tree_print(root);
 
     return EXIT_SUCCESS;
@@ -167,20 +175,9 @@ struct tnode *addtree(struct tnode *p, char *w, size_t ln, size_t cn)
         p->word = strdup(w);
         p->count = 1;
         p->left = p->right = NULL;
-
-        /* add a new element to the coords list */
-        p->list_end = p->lns_list = el_alloc();
-        p->lns_list->ln = ln;
-        p->lns_list->cn = cn;
-        p->lns_list->next = NULL;
     }
-    else if ((cond = strcmp(w, p->word)) == 0) { /* repeated word */
-        p->list_end = p->list_end->next = el_alloc();
-        p->list_end->next = NULL;
-        p->list_end->ln = ln;
-        p->list_end->cn = cn;
+    else if ((cond = strcmp(w, p->word)) == 0) /* repeated word */
         p->count++;
-    }
     else if (cond < 0)
         p->left = addtree(p->left, w, ln, cn);
     else
@@ -189,30 +186,13 @@ struct tnode *addtree(struct tnode *p, char *w, size_t ln, size_t cn)
     return p;
 }
 
-
-/* prints a list of coordinates (Ln: line number, Col: column number) */
-void list_print(struct element *el)
-{
-    if (el == NULL)
-        return;
-
-    printf("(Ln:%d, Col:%d)", el->ln, el->cn);
-
-	for (el = el->next; el != NULL; el = el->next)
-		printf(", (Ln:%d, Col:%d)", el->ln, el->cn);
-
-	printf(".\n");
-}
-
-
-/* tree_print: in-order print of the tree p */
+/* tree_print: post-order print of the tree p */
 void tree_print(struct tnode *p)
 {
     if (p != NULL) {
-        tree_print(p->left);
-        printf("%4d %s\f", p->count, p->word);
-        list_print(p->lns_list);
         tree_print(p->right);
+        printf("%4d %s\n", p->count, p->word);
+        tree_print(p->left);
     }
 }
 
