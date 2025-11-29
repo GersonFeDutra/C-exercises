@@ -1,14 +1,11 @@
 #include "syscalls.h"
 
+
 main() /* copy input to output */
 {
-#ifdef ON_UNIX
-    char buf[BUFSIZE];
+    char buf[BUFSIZ];
     int n;
 
-    while ((n = read(0, buf, BUFSIZE)) > 0)
+    while ((n = read(STDIN_FILENO, buf, BUFSIZ)) > 0)
         write(1, buf, n);
-#else
-    nuw();
-#endif
 }
